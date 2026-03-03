@@ -17,9 +17,11 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config";
 import { getToken, authFetch } from "./auth/authHelpers";
+import { useTheme } from "../context/ThemeContext";
 
 export default function InstructorKeyGen() {
   const navigate = useNavigate();
+  const { isDarkMode, toggleTheme } = useTheme();
 
   // Key generation state
   const [keysGenerated, setKeysGenerated] = useState(false);
@@ -189,9 +191,9 @@ export default function InstructorKeyGen() {
   };
 
   return (
-    <div className="bg-slate-50 min-h-screen flex flex-col font-body">
+    <div className="bg-slate-50 dark:bg-background-dark min-h-screen flex flex-col font-body transition-colors duration-300">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full bg-[#1E3A8A] text-white shadow-lg">
+      <header className="sticky top-0 z-50 w-full bg-[#1E3A8A] dark:bg-surface-dark text-white shadow-lg transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
@@ -204,6 +206,19 @@ export default function InstructorKeyGen() {
               </div>
             </div>
             <div className="flex items-center gap-6">
+              {/* Theme Toggle Button */}
+              <button
+                onClick={toggleTheme}
+                className="relative flex items-center justify-center w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-300"
+                aria-label="Toggle theme"
+              >
+                <span className={`material-symbols-outlined text-lg absolute transition-all duration-300 ${isDarkMode ? 'opacity-0 rotate-90 scale-0' : 'opacity-100 rotate-0 scale-100 text-amber-400'}`}>
+                  light_mode
+                </span>
+                <span className={`material-symbols-outlined text-lg absolute transition-all duration-300 ${isDarkMode ? 'opacity-100 rotate-0 scale-100 text-blue-400' : 'opacity-0 -rotate-90 scale-0'}`}>
+                  dark_mode
+                </span>
+              </button>
               <Link to="/instructor/dashboard" className="text-sm font-medium text-blue-200 hover:text-white transition-colors">
                 ← Back to Dashboard
               </Link>
@@ -219,8 +234,8 @@ export default function InstructorKeyGen() {
           <div className="inline-flex items-center justify-center p-3 mb-4 bg-indigo-100 rounded-full">
             <span className="material-symbols-outlined text-indigo-700 text-3xl">admin_panel_settings</span>
           </div>
-          <h2 className="text-3xl font-bold text-slate-900 mb-3 tracking-tight">Instructor Secure Identity Setup</h2>
-          <p className="text-slate-500 text-lg leading-relaxed">
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-3 tracking-tight">Instructor Secure Identity Setup</h2>
+          <p className="text-slate-500 dark:text-slate-300 text-lg leading-relaxed">
             Configure your cryptographic identity to sign exams and results.
             Your keys ensure document authenticity and integrity.
           </p>
@@ -228,23 +243,23 @@ export default function InstructorKeyGen() {
 
         {/* Status Messages */}
         {error && (
-          <div className="w-full max-w-3xl mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-700">
+          <div className="w-full max-w-3xl mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-3 text-red-700 dark:text-red-400">
             <span className="material-symbols-outlined">error</span>
             <p className="text-sm font-medium">{error}</p>
           </div>
         )}
         {successMessage && (
-          <div className="w-full max-w-3xl mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3 text-emerald-700">
+          <div className="w-full max-w-3xl mb-6 p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center gap-3 text-emerald-700 dark:text-emerald-400">
             <span className="material-symbols-outlined">check_circle</span>
             <p className="text-sm font-medium">{successMessage}</p>
           </div>
         )}
 
         {/* Main Card */}
-        <div className="w-full max-w-3xl bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+        <div className="w-full max-w-3xl bg-white dark:bg-surface-dark rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors duration-300">
 
           {/* Step 1: Key Generation */}
-          <div className="p-8 border-b border-slate-100">
+          <div className="p-8 border-b border-slate-100 dark:border-slate-700">
             <div className="flex flex-col md:flex-row gap-6 items-start">
               <div className="flex-shrink-0">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${keysGenerated ? 'bg-emerald-50 text-emerald-600' : 'bg-indigo-50 text-indigo-600'}`}>
@@ -253,13 +268,13 @@ export default function InstructorKeyGen() {
               </div>
               <div className="flex-grow">
                 <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-lg font-bold text-slate-900">1. Key Pair Generation</h3>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">1. Key Pair Generation</h3>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${keysGenerated ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
                     {keysGenerated ? 'Completed' : 'Required'}
                   </span>
                 </div>
-                <p className="text-slate-500 text-sm mb-4 leading-relaxed">
-                  We use <span className="font-medium text-slate-700">RSA-OAEP 2048-bit</span> for key encryption and <span className="font-medium text-slate-700">RSA-PSS</span> for digitally signing exams and results. This process runs locally in your browser.
+                <p className="text-slate-500 dark:text-slate-300 text-sm mb-4 leading-relaxed">
+                  We use <span className="font-medium text-slate-700 dark:text-slate-200">RSA-OAEP 2048-bit</span> for key encryption and <span className="font-medium text-slate-700 dark:text-slate-200">RSA-PSS</span> for digitally signing exams and results. This process runs locally in your browser.
                 </p>
                 <div className="flex flex-wrap items-center gap-4">
                   <button
@@ -289,7 +304,7 @@ export default function InstructorKeyGen() {
           </div>
 
           {/* Step 2: Upload */}
-          <div className={`p-8 border-b border-slate-100 ${!keysGenerated ? 'bg-slate-50/50' : ''}`}>
+          <div className={`p-8 border-b border-slate-100 dark:border-slate-700 ${!keysGenerated ? 'bg-slate-50/50 dark:bg-slate-800/30' : ''}`}>
             <div className="flex flex-col md:flex-row gap-6 items-start">
               <div className="flex-shrink-0">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${keysUploaded ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
@@ -298,7 +313,7 @@ export default function InstructorKeyGen() {
               </div>
               <div className="flex-grow">
                 <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-lg font-bold text-slate-900">2. Upload Public Keys</h3>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">2. Upload Public Keys</h3>
                   {keysUploaded ? (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 border border-emerald-200">
                       <span className="material-symbols-outlined text-[14px]">check_circle</span>
@@ -314,8 +329,8 @@ export default function InstructorKeyGen() {
                     </span>
                   )}
                 </div>
-                <p className="text-slate-500 text-sm mb-4 leading-relaxed">
-                  Only your <span className="font-medium text-slate-700">public keys</span> are transmitted to the exam server. Students will use these to verify your signatures on exams and results.
+                <p className="text-slate-500 dark:text-slate-300 text-sm mb-4 leading-relaxed">
+                  Only your <span className="font-medium text-slate-700 dark:text-slate-200">public keys</span> are transmitted to the exam server. Students will use these to verify your signatures on exams and results.
                 </p>
                 <button
                   onClick={uploadPublicKey}
@@ -345,13 +360,13 @@ export default function InstructorKeyGen() {
           </div>
 
           {/* Security Footer */}
-          <div className="px-8 py-6 bg-indigo-50">
+          <div className="px-8 py-6 bg-indigo-50 dark:bg-slate-800/50">
             <div className="flex items-start gap-3">
-              <span className="material-symbols-outlined text-indigo-700 mt-0.5 text-xl">security</span>
+              <span className="material-symbols-outlined text-indigo-700 dark:text-indigo-400 mt-0.5 text-xl">security</span>
               <div>
-                <h4 className="text-sm font-bold text-slate-900 mb-2">Instructor Security Guarantees</h4>
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-2">Instructor Security Guarantees</h4>
                 <ul className="space-y-2">
-                  <li className="flex items-center gap-2 text-sm text-slate-600">
+                  <li className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                     <span className="material-symbols-outlined text-emerald-500 text-[16px]">check_circle</span>
                     Private keys never leave your device
                   </li>
@@ -370,8 +385,8 @@ export default function InstructorKeyGen() {
         </div>
 
         {/* Bottom Help Text */}
-        <p className="mt-8 text-center text-sm text-slate-500">
-          Having trouble? <a className="text-indigo-600 hover:underline font-medium" href="#">Contact IT Support</a> or view the <a className="text-indigo-600 hover:underline font-medium" href="#">Faculty Guide</a>.
+        <p className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
+          Having trouble? <a className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium" href="#">Contact IT Support</a> or view the <a className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium" href="#">Faculty Guide</a>.
         </p>
       </main>
     </div>

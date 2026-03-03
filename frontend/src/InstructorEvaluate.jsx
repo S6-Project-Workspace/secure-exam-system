@@ -11,6 +11,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "./config";
 import { getToken, authFetch } from "./app/auth/authHelpers";
+import { useTheme } from "./context/ThemeContext";
 import {
   base64ToArrayBuffer,
   bufferToBase64,
@@ -24,6 +25,7 @@ import {
 
 export default function InstructorEvaluate() {
   const navigate = useNavigate();
+  const { isDarkMode, toggleTheme } = useTheme();
 
   const [exams, setExams] = useState([]);
   const [selectedExamId, setSelectedExamId] = useState("");
@@ -47,7 +49,7 @@ export default function InstructorEvaluate() {
 
     // Check for instructor keys
     const hasOaepKey = !!localStorage.getItem("instructor_oaep_private_key");
-    const hasSignKey = !!localStorage.getItem("instructor_sign_private_key");
+    const hasSignKey = !!localStorage.getItem("instructor_pss_private_key");
     setHasKeys(hasOaepKey && hasSignKey);
 
     fetchExams();
@@ -159,7 +161,7 @@ export default function InstructorEvaluate() {
       const dataBuf = new TextEncoder().encode(canonical);
 
       // Load instructor RSA-PSS signing private key
-      const b64SignPk = localStorage.getItem("instructor_sign_private_key");
+      const b64SignPk = localStorage.getItem("instructor_pss_private_key");
       if (!b64SignPk) {
         throw new Error("Instructor signing private key not found. Please generate keys first.");
       }
@@ -205,26 +207,41 @@ export default function InstructorEvaluate() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-body">
+    <div className="min-h-screen bg-slate-50 dark:bg-background-dark font-body transition-colors duration-300">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-6 py-4">
+      <header className="bg-white dark:bg-surface-dark border-b border-slate-200 dark:border-slate-700 px-6 py-4 transition-colors duration-300">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-semibold rounded">
+              <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 text-xs font-semibold rounded">
                 INSTRUCTOR
               </span>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900">Evaluate Submissions</h1>
-            <p className="text-sm text-slate-500">Decrypt student answers and publish signed results</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Evaluate Submissions</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Decrypt student answers and publish signed results</p>
           </div>
-          <Link
-            to="/instructor/dashboard"
-            className="flex items-center gap-2 text-slate-600 hover:text-slate-900"
-          >
-            <span className="material-symbols-outlined">arrow_back</span>
-            Dashboard
-          </Link>
+          <div className="flex items-center gap-4">
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className="relative flex items-center justify-center w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-300"
+              aria-label="Toggle theme"
+            >
+              <span className={`material-symbols-outlined text-lg absolute transition-all duration-300 ${isDarkMode ? 'opacity-0 rotate-90 scale-0' : 'opacity-100 rotate-0 scale-100 text-amber-500'}`}>
+                light_mode
+              </span>
+              <span className={`material-symbols-outlined text-lg absolute transition-all duration-300 ${isDarkMode ? 'opacity-100 rotate-0 scale-100 text-blue-400' : 'opacity-0 -rotate-90 scale-0'}`}>
+                dark_mode
+              </span>
+            </button>
+            <Link
+              to="/instructor/dashboard"
+              className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+            >
+              <span className="material-symbols-outlined">arrow_back</span>
+              Dashboard
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -248,16 +265,16 @@ export default function InstructorEvaluate() {
         )}
 
         {/* Exam Selection */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
-          <h2 className="text-lg font-bold text-slate-900 mb-4">Select Exam</h2>
+        <div className="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 mb-6 transition-colors duration-300">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Select Exam</h2>
 
           <div className="flex gap-4 items-end">
             <div className="flex-1">
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Exam to Evaluate
               </label>
               {isLoadingExams ? (
-                <div className="flex items-center gap-2 text-slate-500 py-3">
+                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 py-3">
                   <span className="material-symbols-outlined animate-spin">progress_activity</span>
                   Loading exams...
                 </div>
@@ -265,7 +282,7 @@ export default function InstructorEvaluate() {
                 <select
                   value={selectedExamId}
                   onChange={(e) => setSelectedExamId(e.target.value)}
-                  className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full p-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 transition-colors"
                 >
                   <option value="">-- Select an exam --</option>
                   {exams.map((exam) => (
@@ -281,8 +298,8 @@ export default function InstructorEvaluate() {
               onClick={fetchSubmissions}
               disabled={!selectedExamId || !hasKeys}
               className={`px-6 py-3 rounded-xl font-semibold transition-all flex items-center gap-2 ${selectedExamId && hasKeys
-                  ? "bg-purple-600 hover:bg-purple-700 text-white"
-                  : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                ? "bg-purple-600 hover:bg-purple-700 text-white"
+                : "bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed"
                 }`}
             >
               <span className="material-symbols-outlined">download</span>
@@ -295,21 +312,21 @@ export default function InstructorEvaluate() {
         {status && (
           <div
             className={`mb-6 p-4 rounded-xl border flex items-center gap-3 ${statusType === "error"
-                ? "bg-red-50 border-red-200"
-                : statusType === "success"
-                  ? "bg-emerald-50 border-emerald-200"
-                  : statusType === "loading"
-                    ? "bg-blue-50 border-blue-200"
-                    : "bg-slate-50 border-slate-200"
+              ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
+              : statusType === "success"
+                ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800"
+                : statusType === "loading"
+                  ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+                  : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
               }`}
           >
             <span
               className={`material-symbols-outlined ${statusType === "loading" ? "animate-spin" : ""
                 } ${statusType === "error"
-                  ? "text-red-600"
+                  ? "text-red-600 dark:text-red-400"
                   : statusType === "success"
-                    ? "text-emerald-600"
-                    : "text-blue-600"
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-blue-600 dark:text-blue-400"
                 }`}
             >
               {statusType === "error"
@@ -320,10 +337,10 @@ export default function InstructorEvaluate() {
             </span>
             <span
               className={`font-medium ${statusType === "error"
-                  ? "text-red-700"
-                  : statusType === "success"
-                    ? "text-emerald-700"
-                    : "text-blue-700"
+                ? "text-red-700 dark:text-red-400"
+                : statusType === "success"
+                  ? "text-emerald-700 dark:text-emerald-400"
+                  : "text-blue-700 dark:text-blue-400"
                 }`}
             >
               {status}
@@ -333,34 +350,34 @@ export default function InstructorEvaluate() {
 
         {/* Submissions List */}
         {subs.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-6">
-            <div className="px-6 py-4 border-b border-slate-100">
-              <h2 className="text-lg font-bold text-slate-900">
+          <div className="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden mb-6 transition-colors duration-300">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                 Student Submissions ({subs.length})
               </h2>
             </div>
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-slate-100 dark:divide-slate-700">
               {subs.map((s) => (
                 <div
                   key={s.submission_id}
-                  className={`p-4 flex items-center justify-between ${selected?.submission_id === s.submission_id ? "bg-purple-50" : ""
+                  className={`p-4 flex items-center justify-between ${selected?.submission_id === s.submission_id ? "bg-purple-50 dark:bg-purple-900/20" : ""
                     }`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
-                      <span className="material-symbols-outlined text-slate-600">person</span>
+                    <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-slate-600 dark:text-slate-400">person</span>
                     </div>
                     <div>
-                      <p className="font-medium text-slate-900">
+                      <p className="font-medium text-slate-900 dark:text-white">
                         Student: {s.student_id?.slice(0, 8)}...
                       </p>
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
                         Submitted: {new Date(s.created_at).toLocaleString()}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-lg">
+                    <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                       <span className="material-symbols-outlined text-blue-600 text-sm">lock</span>
                       <span className="text-sm text-blue-700">Encrypted</span>
                     </div>
@@ -368,8 +385,8 @@ export default function InstructorEvaluate() {
                       onClick={() => decryptSubmission(s)}
                       disabled={!hasKeys}
                       className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 ${hasKeys
-                          ? "bg-amber-500 hover:bg-amber-600 text-white"
-                          : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                        ? "bg-amber-500 hover:bg-amber-600 text-white"
+                        : "bg-slate-200 text-slate-400 cursor-not-allowed"
                         }`}
                     >
                       <span className="material-symbols-outlined text-sm">lock_open</span>

@@ -62,14 +62,14 @@ export default function Home() {
         {/* Hero Section */}
         <section className="w-full flex flex-col items-center justify-center pt-16 pb-12 px-4 lg:px-10">
           <div className="max-w-[1000px] text-center flex flex-col items-center gap-8">
-            <h1 className="text-[#111827] dark:text-white text-5xl md:text-6xl lg:text-[4rem] font-bold leading-[1.1] tracking-tight">
+            <h1 className="text-[#111827] dark:text-white text-5xl md:text-6xl lg:text-[4rem] font-bold leading-[1.3] tracking-tight">
               Enterprise-Grade Secure <br className="hidden md:block" /> Online Examinations
             </h1>
-            <p className="text-slate-600 dark:text-slate-300 text-lg md:text-xl font-normal leading-relaxed max-w-[700px] mx-auto">
+            <p className="text-slate-600 dark:text-slate-300 text-lg md:text-xl font-normal leading-[1.8] max-w-[700px] mx-auto">
               Cryptography-aware examination platform with real-time integrity monitoring, secure authentication, and comprehensive audit trails for educational institutions.
             </p>
             <div className="flex flex-wrap justify-center gap-4 mt-4">
-              <Link to="/signup" className="group flex items-center justify-center gap-2 rounded-lg h-12 px-8 bg-primary text-white text-base font-bold transition-colors hover:bg-primary-dark shadow-md">
+              <Link to="/signup" className="group flex items-center justify-center gap-2 rounded-lg h-12 px-8 bg-primary text-slate-900 dark:text-white text-base font-bold transition-colors hover:bg-primary-dark shadow-md">
                 <span>Start Free Trial</span>
                 <span className="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform">arrow_forward</span>
               </Link>

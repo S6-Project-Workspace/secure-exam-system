@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../config";
 import { setSession } from "./authHelpers";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function Login() {
+    const { isDarkMode, toggleTheme } = useTheme();
     const [role, setRole] = useState("student");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -106,14 +108,29 @@ export default function Login() {
             {/* Right Panel - Form */}
             <div className="w-full lg:w-[55%] bg-white dark:bg-[#121212] flex items-center justify-center p-6 md:p-10">
                 <div className="w-full max-w-md">
-                    {/* Mobile Back Button */}
-                    <Link
-                        to="/"
-                        className="lg:hidden inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-colors mb-8 text-sm"
-                    >
-                        <span className="material-symbols-outlined text-lg">arrow_back</span>
-                        Back to Home
-                    </Link>
+                    {/* Mobile Back Button and Theme Toggle */}
+                    <div className="flex items-center justify-between mb-8">
+                        <Link
+                            to="/"
+                            className="lg:hidden inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-colors text-sm"
+                        >
+                            <span className="material-symbols-outlined text-lg">arrow_back</span>
+                            Back to Home
+                        </Link>
+                        {/* Theme Toggle Button */}
+                        <button
+                            onClick={toggleTheme}
+                            className="relative flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-300 ml-auto"
+                            aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                        >
+                            <span className={`material-symbols-outlined text-xl absolute transition-all duration-300 ${isDarkMode ? 'opacity-0 rotate-90 scale-0' : 'opacity-100 rotate-0 scale-100 text-amber-500'}`}>
+                                light_mode
+                            </span>
+                            <span className={`material-symbols-outlined text-xl absolute transition-all duration-300 ${isDarkMode ? 'opacity-100 rotate-0 scale-100 text-blue-400' : 'opacity-0 -rotate-90 scale-0'}`}>
+                                dark_mode
+                            </span>
+                        </button>
+                    </div>
 
                     {/* Header */}
                     <div className="mb-8">
@@ -230,7 +247,7 @@ export default function Login() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-primary hover:bg-blue-900 text-white font-semibold text-base shadow-lg shadow-primary/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                            className="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-primary hover:bg-blue-900 text-slate-900 dark:text-white font-semibold text-base shadow-lg shadow-primary/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                         >
                             {loading ? (
                                 <>

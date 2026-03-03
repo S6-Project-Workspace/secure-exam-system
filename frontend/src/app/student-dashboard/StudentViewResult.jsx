@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../config";
 import { authFetch, getToken } from "../auth/authHelpers";
+import { useTheme } from "../../context/ThemeContext";
 import {
     importRsaPssPublicKeyFromPem,
     verifyRsaPssSignature,
@@ -17,6 +18,7 @@ import {
 export default function StudentViewResult() {
     const { examId } = useParams();
     const navigate = useNavigate();
+    const { isDarkMode, toggleTheme } = useTheme();
 
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -106,12 +108,12 @@ export default function StudentViewResult() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-background-dark transition-colors duration-300">
                 <div className="text-center">
-                    <span className="material-symbols-outlined text-5xl text-blue-600 animate-spin mb-4">
+                    <span className="material-symbols-outlined text-5xl text-blue-600 dark:text-blue-400 animate-spin mb-4">
                         progress_activity
                     </span>
-                    <p className="text-lg font-semibold text-slate-700">Loading result...</p>
+                    <p className="text-lg font-semibold text-slate-700 dark:text-slate-200">Loading result...</p>
                 </div>
             </div>
         );
@@ -119,12 +121,12 @@ export default function StudentViewResult() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-slate-50 py-10 px-4">
+            <div className="min-h-screen bg-slate-50 dark:bg-background-dark py-10 px-4 transition-colors duration-300">
                 <div className="max-w-2xl mx-auto">
-                    <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-8 text-center">
                         <span className="material-symbols-outlined text-5xl text-red-500 mb-4">error</span>
-                        <h2 className="text-xl font-bold text-red-800 mb-2">Result Not Found</h2>
-                        <p className="text-red-600 mb-6">{error}</p>
+                        <h2 className="text-xl font-bold text-red-800 dark:text-red-400 mb-2">Result Not Found</h2>
+                        <p className="text-red-600 dark:text-red-400 mb-6">{error}</p>
                         <Link
                             to="/student/dashboard"
                             className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
@@ -140,29 +142,44 @@ export default function StudentViewResult() {
     const resultData = result?.result;
 
     return (
-        <div className="min-h-screen bg-slate-50 font-body">
+        <div className="min-h-screen bg-slate-50 dark:bg-background-dark font-body transition-colors duration-300">
             {/* Header */}
-            <header className="bg-white border-b border-slate-200 px-6 py-4">
+            <header className="bg-white dark:bg-surface-dark border-b border-slate-200 dark:border-slate-700 px-6 py-4 transition-colors duration-300">
                 <div className="max-w-4xl mx-auto flex items-center justify-between">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-semibold rounded">
+                            <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-semibold rounded">
                                 RESULT
                             </span>
-                            <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs font-semibold rounded">
+                            <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-semibold rounded">
                                 {examId?.slice(0, 8).toUpperCase()}
                             </span>
                         </div>
-                        <h1 className="text-2xl font-bold text-slate-900">Exam Result</h1>
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Exam Result</h1>
                     </div>
 
-                    <Link
-                        to="/student/dashboard"
-                        className="flex items-center gap-2 text-slate-600 hover:text-slate-900"
-                    >
-                        <span className="material-symbols-outlined">arrow_back</span>
-                        Dashboard
-                    </Link>
+                    <div className="flex items-center gap-4">
+                        {/* Theme Toggle Button */}
+                        <button
+                            onClick={toggleTheme}
+                            className="relative flex items-center justify-center w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-300"
+                            aria-label="Toggle theme"
+                        >
+                            <span className={`material-symbols-outlined text-lg absolute transition-all duration-300 ${isDarkMode ? 'opacity-0 rotate-90 scale-0' : 'opacity-100 rotate-0 scale-100 text-amber-500'}`}>
+                                light_mode
+                            </span>
+                            <span className={`material-symbols-outlined text-lg absolute transition-all duration-300 ${isDarkMode ? 'opacity-100 rotate-0 scale-100 text-blue-400' : 'opacity-0 -rotate-90 scale-0'}`}>
+                                dark_mode
+                            </span>
+                        </button>
+                        <Link
+                            to="/student/dashboard"
+                            className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                        >
+                            <span className="material-symbols-outlined">arrow_back</span>
+                            Dashboard
+                        </Link>
+                    </div>
                 </div>
             </header>
 
@@ -170,46 +187,46 @@ export default function StudentViewResult() {
                 {/* Signature Verification Banner */}
                 <div
                     className={`mb-6 p-4 rounded-xl border flex items-center gap-3 ${signatureValid === null || verifying
-                            ? "bg-blue-50 border-blue-200"
+                            ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
                             : signatureValid
-                                ? "bg-emerald-50 border-emerald-200"
-                                : "bg-red-50 border-red-200"
+                                ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800"
+                                : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
                         }`}
                 >
                     {verifying ? (
                         <>
-                            <span className="material-symbols-outlined text-blue-600 animate-spin">
+                            <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 animate-spin">
                                 progress_activity
                             </span>
                             <div>
-                                <p className="font-semibold text-blue-800">Verifying Signature...</p>
-                                <p className="text-sm text-blue-600">
+                                <p className="font-semibold text-blue-800 dark:text-blue-300">Verifying Signature...</p>
+                                <p className="text-sm text-blue-600 dark:text-blue-400">
                                     Checking instructor's digital signature
                                 </p>
                             </div>
                         </>
                     ) : signatureValid ? (
                         <>
-                            <span className="material-symbols-outlined text-emerald-600 text-3xl">
+                            <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400 text-3xl">
                                 verified
                             </span>
                             <div>
-                                <p className="font-semibold text-emerald-800">
+                                <p className="font-semibold text-emerald-800 dark:text-emerald-300">
                                     ✅ Signature Verified
                                 </p>
-                                <p className="text-sm text-emerald-600">
+                                <p className="text-sm text-emerald-600 dark:text-emerald-400">
                                     This result is authentic and has not been tampered with.
                                 </p>
                             </div>
                         </>
                     ) : (
                         <>
-                            <span className="material-symbols-outlined text-red-600 text-3xl">
+                            <span className="material-symbols-outlined text-red-600 dark:text-red-400 text-3xl">
                                 gpp_bad
                             </span>
                             <div>
-                                <p className="font-semibold text-red-800">⚠️ Signature Invalid</p>
-                                <p className="text-sm text-red-600">
+                                <p className="font-semibold text-red-800 dark:text-red-300">⚠️ Signature Invalid</p>
+                                <p className="text-sm text-red-600 dark:text-red-400">
                                     Warning: This result may have been tampered with. Contact your instructor.
                                 </p>
                             </div>
@@ -219,14 +236,14 @@ export default function StudentViewResult() {
 
                 {/* Only show result if signature is valid */}
                 {signatureValid === false && (
-                    <div className="bg-white rounded-2xl border border-red-200 p-8 text-center">
+                    <div className="bg-white dark:bg-surface-dark rounded-2xl border border-red-200 dark:border-red-800 p-8 text-center transition-colors duration-300">
                         <span className="material-symbols-outlined text-5xl text-red-400 mb-4">
                             lock
                         </span>
-                        <h2 className="text-xl font-bold text-slate-900 mb-2">
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
                             Result Cannot Be Displayed
                         </h2>
-                        <p className="text-slate-600 mb-6">
+                        <p className="text-slate-600 dark:text-slate-400 mb-6">
                             The cryptographic signature verification failed. This result cannot be trusted.
                         </p>
                         <Link
@@ -241,7 +258,7 @@ export default function StudentViewResult() {
                 {signatureValid && resultData && (
                     <>
                         {/* Result Card */}
-                        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+                        <div className="bg-white dark:bg-surface-dark rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors duration-300">
                             {/* Header */}
                             <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6 text-white">
                                 <div className="flex items-center justify-between">

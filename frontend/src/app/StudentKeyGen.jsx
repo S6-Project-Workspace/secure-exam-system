@@ -17,9 +17,12 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config";
 import { getToken, authFetch } from "./auth/authHelpers";
+import { useTheme } from "../context/ThemeContext";
+import DashboardHeaderNew from "./student-dashboard/components/DashboardHeaderNew";
 
 export default function StudentKeyGen() {
   const navigate = useNavigate();
+  const { isDarkMode, toggleTheme } = useTheme();
 
   // Key generation state
   const [keysGenerated, setKeysGenerated] = useState(false);
@@ -185,38 +188,19 @@ export default function StudentKeyGen() {
   };
 
   return (
-    <div className="bg-slate-50 min-h-screen flex flex-col font-body">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-3">
-              <div className="bg-blue-900/10 p-2 rounded-lg text-blue-900">
-                <span className="material-symbols-outlined text-2xl">school</span>
-              </div>
-              <div>
-                <h1 className="text-blue-900 text-lg font-bold leading-none tracking-tight">University Secure Exam System</h1>
-                <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">Department of Computer Science</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-6">
-              <Link to="/student/dashboard" className="text-sm font-medium text-slate-500 hover:text-blue-900 transition-colors">
-                ← Back to Dashboard
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className={`${isDarkMode ? 'bg-[#0f172a]' : 'bg-slate-50'} min-h-screen flex flex-col font-body transition-colors duration-300`}>
+      {/* Header - Using the same navbar as student dashboard */}
+      <DashboardHeaderNew showBackButton={true} />
 
       {/* Main Content */}
       <main className="flex-grow flex flex-col items-center justify-start pt-12 pb-12 px-4 sm:px-6">
         {/* Header Section */}
         <div className="text-center max-w-2xl mb-10">
-          <div className="inline-flex items-center justify-center p-3 mb-4 bg-blue-50 rounded-full">
-            <span className="material-symbols-outlined text-blue-900 text-3xl">lock_person</span>
+          <div className={`inline-flex items-center justify-center p-3 mb-4 ${isDarkMode ? 'bg-blue-500/20' : 'bg-blue-100'} rounded-full`}>
+            <span className={`material-symbols-outlined ${isDarkMode ? 'text-blue-400' : 'text-blue-600'} text-3xl`}>lock_person</span>
           </div>
-          <h2 className="text-3xl font-bold text-slate-900 mb-3 tracking-tight">Secure Identity Setup</h2>
-          <p className="text-slate-500 text-lg leading-relaxed">
+          <h2 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'} mb-3 tracking-tight`}>Secure Identity Setup</h2>
+          <p className={`${isDarkMode ? 'text-slate-400' : 'text-slate-600'} text-lg leading-relaxed`}>
             Before entering the exam environment, you must configure your local cryptographic identity.
             Your keys ensure exam confidentiality and integrity.
           </p>
@@ -224,44 +208,44 @@ export default function StudentKeyGen() {
 
         {/* Status Messages */}
         {error && (
-          <div className="w-full max-w-3xl mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-700">
+          <div className={`w-full max-w-3xl mb-6 p-4 ${isDarkMode ? 'bg-red-500/10 border-red-500/30' : 'bg-red-50 border-red-200'} border rounded-xl flex items-center gap-3 text-red-400`}>
             <span className="material-symbols-outlined">error</span>
             <p className="text-sm font-medium">{error}</p>
           </div>
         )}
         {successMessage && (
-          <div className="w-full max-w-3xl mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3 text-emerald-700">
+          <div className={`w-full max-w-3xl mb-6 p-4 ${isDarkMode ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-emerald-50 border-emerald-200'} border rounded-xl flex items-center gap-3 text-emerald-400`}>
             <span className="material-symbols-outlined">check_circle</span>
             <p className="text-sm font-medium">{successMessage}</p>
           </div>
         )}
 
         {/* Main Card */}
-        <div className="w-full max-w-3xl bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+        <div className={`w-full max-w-3xl ${isDarkMode ? 'bg-[#1a2332] border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'} rounded-2xl border overflow-hidden transition-colors duration-300`}>
 
           {/* Step 1: Key Generation */}
-          <div className="p-8 border-b border-slate-100">
+          <div className={`p-8 border-b ${isDarkMode ? 'border-slate-700/50' : 'border-slate-200'}`}>
             <div className="flex flex-col md:flex-row gap-6 items-start">
               <div className="flex-shrink-0">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${keysGenerated ? 'bg-emerald-50 text-emerald-600' : 'bg-indigo-50 text-indigo-600'}`}>
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${keysGenerated ? 'bg-emerald-500/20 text-emerald-400' : 'bg-indigo-500/20 text-indigo-400'}`}>
                   <span className="material-symbols-outlined text-[28px]">{keysGenerated ? 'check_circle' : 'vpn_key'}</span>
                 </div>
               </div>
               <div className="flex-grow">
                 <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-lg font-bold text-slate-900">1. Key Pair Generation</h3>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${keysGenerated ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+                  <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>1. Key Pair Generation</h3>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${keysGenerated ? 'bg-emerald-500/20 text-emerald-400' : isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-600'}`}>
                     {keysGenerated ? 'Completed' : 'Required'}
                   </span>
                 </div>
-                <p className="text-slate-500 text-sm mb-4 leading-relaxed">
-                  We use <span className="font-medium text-slate-700">RSA-OAEP 2048-bit</span> for decrypting exam papers and <span className="font-medium text-slate-700">RSA-PSS</span> for digitally signing your answers. This process runs locally in your browser.
+                <p className={`${isDarkMode ? 'text-slate-400' : 'text-slate-600'} text-sm mb-4 leading-relaxed`}>
+                  We use <span className={`font-medium ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>RSA-OAEP 2048-bit</span> for decrypting exam papers and <span className={`font-medium ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>RSA-PSS</span> for digitally signing your answers. This process runs locally in your browser.
                 </p>
                 <div className="flex flex-wrap items-center gap-4">
                   <button
                     onClick={generateKeys}
                     disabled={isGenerating}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-900 hover:bg-blue-950 disabled:bg-blue-900/50 text-white text-sm font-semibold rounded-lg shadow-sm transition-all focus:ring-4 focus:ring-blue-900/20 disabled:cursor-not-allowed"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 text-white text-sm font-semibold rounded-lg shadow-sm transition-all focus:ring-4 focus:ring-blue-600/20 disabled:cursor-not-allowed"
                   >
                     {isGenerating ? (
                       <>
@@ -275,8 +259,8 @@ export default function StudentKeyGen() {
                       </>
                     )}
                   </button>
-                  <span className="text-xs text-slate-500 italic flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[16px] text-blue-900">info</span>
+                  <span className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'} italic flex items-center gap-1`}>
+                    <span className="material-symbols-outlined text-[16px] text-blue-400">info</span>
                     May take up to 10 seconds
                   </span>
                 </div>
@@ -285,23 +269,23 @@ export default function StudentKeyGen() {
           </div>
 
           {/* Step 2: Upload */}
-          <div className={`p-8 border-b border-slate-100 ${!keysGenerated ? 'bg-slate-50/50' : ''}`}>
+          <div className={`p-8 border-b ${isDarkMode ? 'border-slate-700/50' : 'border-slate-200'} ${!keysGenerated ? (isDarkMode ? 'bg-slate-800/30' : 'bg-slate-50') : ''}`}>
             <div className="flex flex-col md:flex-row gap-6 items-start">
               <div className="flex-shrink-0">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${keysUploaded ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${keysUploaded ? 'bg-emerald-500/20 text-emerald-400' : isDarkMode ? 'bg-slate-700 text-slate-500' : 'bg-slate-200 text-slate-400'}`}>
                   <span className="material-symbols-outlined text-[28px]">{keysUploaded ? 'cloud_done' : 'cloud_upload'}</span>
                 </div>
               </div>
               <div className="flex-grow">
                 <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-lg font-bold text-slate-900">2. Upload Public Key</h3>
+                  <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>2. Upload Public Key</h3>
                   {keysUploaded ? (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 border border-emerald-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                       <span className="material-symbols-outlined text-[14px]">check_circle</span>
                       Uploaded
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-600 border border-amber-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400 border border-amber-500/30">
                       <span className="relative flex h-2 w-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
@@ -310,15 +294,15 @@ export default function StudentKeyGen() {
                     </span>
                   )}
                 </div>
-                <p className="text-slate-500 text-sm mb-4 leading-relaxed">
-                  Only your <span className="font-medium text-slate-700">public key</span> is transmitted to the exam server to encrypt your question paper. Your private key remains strictly on this device.
+                <p className={`${isDarkMode ? 'text-slate-400' : 'text-slate-600'} text-sm mb-4 leading-relaxed`}>
+                  Only your <span className={`font-medium ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>public key</span> is transmitted to the exam server to encrypt your question paper. Your private key remains strictly on this device.
                 </p>
                 <button
                   onClick={uploadPublicKey}
                   disabled={!keysGenerated || isUploading}
                   className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg shadow-sm transition-all ${keysGenerated
-                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white focus:ring-4 focus:ring-emerald-600/20'
-                      : 'bg-white border border-slate-300 text-slate-400 cursor-not-allowed'
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white focus:ring-4 focus:ring-emerald-600/20'
+                    : isDarkMode ? 'bg-slate-700 border border-slate-600 text-slate-500 cursor-not-allowed' : 'bg-slate-200 border border-slate-300 text-slate-400 cursor-not-allowed'
                     }`}
                 >
                   {isUploading ? (
@@ -334,28 +318,28 @@ export default function StudentKeyGen() {
                   )}
                 </button>
                 {!keysGenerated && (
-                  <p className="mt-2 text-xs text-slate-500">Please generate keys first.</p>
+                  <p className={`mt-2 text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Please generate keys first.</p>
                 )}
               </div>
             </div>
           </div>
 
           {/* Security Footer */}
-          <div className="px-8 py-6 bg-slate-100">
+          <div className={`px-8 py-6 ${isDarkMode ? 'bg-slate-800/50' : 'bg-slate-50'}`}>
             <div className="flex items-start gap-3">
-              <span className="material-symbols-outlined text-blue-900 mt-0.5 text-xl">security</span>
+              <span className="material-symbols-outlined text-blue-400 mt-0.5 text-xl">security</span>
               <div>
-                <h4 className="text-sm font-bold text-slate-900 mb-2">Security Guarantees</h4>
+                <h4 className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'} mb-2`}>Security Guarantees</h4>
                 <ul className="space-y-2">
-                  <li className="flex items-center gap-2 text-sm text-slate-600">
+                  <li className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                     <span className="material-symbols-outlined text-emerald-500 text-[16px]">check_circle</span>
                     Private keys never leave your device
                   </li>
-                  <li className="flex items-center gap-2 text-sm text-slate-600">
+                  <li className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                     <span className="material-symbols-outlined text-emerald-500 text-[16px]">check_circle</span>
                     Public keys enable secure, individualized exam delivery
                   </li>
-                  <li className="flex items-center gap-2 text-sm text-slate-600">
+                  <li className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                     <span className="material-symbols-outlined text-emerald-500 text-[16px]">check_circle</span>
                     Cryptographic keys are unique per student session
                   </li>
@@ -366,8 +350,8 @@ export default function StudentKeyGen() {
         </div>
 
         {/* Bottom Help Text */}
-        <p className="mt-8 text-center text-sm text-slate-500">
-          Having trouble? <a className="text-blue-900 hover:underline font-medium" href="#">Contact Exam Support</a> or view the <a className="text-blue-900 hover:underline font-medium" href="#">Student Guide</a>.
+        <p className={`mt-8 text-center text-sm ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+          Having trouble? <a className="text-blue-400 hover:underline font-medium" href="#">Contact Exam Support</a> or view the <a className="text-blue-400 hover:underline font-medium" href="#">Student Guide</a>.
         </p>
       </main>
     </div>

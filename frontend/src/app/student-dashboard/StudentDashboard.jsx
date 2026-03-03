@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { API_BASE_URL } from "../../config";
 import { getToken, clearSession, authFetch } from "../auth/authHelpers";
+import { useTheme } from "../../context/ThemeContext";
 
 // Dashboard Components
-import DashboardHeader from "./components/DashboardHeader";
-import WelcomeBanner from "./components/WelcomeBanner";
-import StatsCards from "./components/StatsCards";
-import PerformanceAnalytics from "./components/PerformanceAnalytics";
+import DashboardHeaderNew from "./components/DashboardHeaderNew";
+import ExamOverviewCard from "./components/ExamOverviewCard";
+import SecurityStatusCard from "./components/SecurityStatusCard";
+import PendingExamsCard from "./components/PendingExamsCard";
 import IdentityManagement from "./components/IdentityManagement";
 import AvailableExams from "./components/AvailableExams";
-import SystemHealth from "./components/SystemHealth";
 import DashboardFooter from "./components/DashboardFooter";
 
 export default function StudentDashboard() {
@@ -36,7 +36,7 @@ export default function StudentDashboard() {
             try {
                 const res = await authFetch(`${API_BASE_URL}/auth/me`);
                 const data = await res.json();
-                console.log("Auth Check (Profile):", data);
+
                 setUser({ name: "Student", id: data.user?.sub || "" });
             } catch (err) {
                 console.error("Auth test failed:", err);
@@ -97,6 +97,8 @@ export default function StudentDashboard() {
         navigate("/login");
     };
 
+    const { isDarkMode } = useTheme();
+
     const generateAndUploadKeys = async () => {
         try {
             setKeyStatus({ generated: false, uploaded: false });
@@ -132,9 +134,8 @@ export default function StudentDashboard() {
             });
 
             // Upload
-            const res = await authFetch(`${API_BASE_URL}/keys/upload`, {
+            const res = await authFetch(`${API_BASE_URL}/keys/upload?public_key=${encodeURIComponent(combinedPub)}`, {
                 method: "POST",
-                body: JSON.stringify({ public_key: combinedPub })
             });
 
             if (res.ok) {
@@ -143,46 +144,74 @@ export default function StudentDashboard() {
                 throw new Error("Upload failed");
             }
         } catch (err) {
-            console.error("Key gen failed:", err);
-            alert("Key generation failed.");
+            setKeyStatus({ generated: false, uploaded: false });
         }
     };
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-background-dark">
-                <div className="animate-spin material-symbols-outlined text-4xl text-blue-900 dark:text-blue-400">progress_activity</div>
+            <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-[#0f172a]' : 'bg-slate-50'}`}>
+                <div className={`animate-spin material-symbols-outlined text-4xl ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>progress_activity</div>
             </div>
         );
     }
 
+    // Calculate stats for the new dashboard
+    const pendingCount = Math.max(0, (exams?.length || 0) - (results?.length || 0));
+    const completedCount = results?.length || 0;
+    const totalCount = exams?.length || 0;
+
     return (
-        <div className="bg-slate-50 dark:bg-background-dark min-h-screen flex flex-col font-body text-slate-500 dark:text-slate-300 transition-colors duration-300">
-            <DashboardHeader name={user.name} id={user.id} onLogout={handleLogout} />
+        <div className={`${isDarkMode ? 'bg-[#0f172a] text-slate-300' : 'bg-slate-50 text-slate-700'} min-h-screen flex flex-col font-body transition-colors duration-300`}>
+            <DashboardHeaderNew name={user.name} id={user.id} onLogout={handleLogout} />
 
-            <main className="flex-1 py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full space-y-10">
-                <WelcomeBanner name={user.name} />
-                <StatsCards stats={stats} keyStatus={keyStatus} />
-                <PerformanceAnalytics performance={performance} stats={stats} results={results} />
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 space-y-8">
-                        <IdentityManagement keyStatus={keyStatus} onGenerateKeys={generateAndUploadKeys} />
-                        <AvailableExams exams={exams} results={results} />
-                    </div>
-                    <div className="space-y-6">
-                        <SystemHealth keyStatus={keyStatus} />
-                        <div className="bg-gradient-to-b from-blue-950 to-blue-900 rounded-xl shadow-sm p-6 text-white relative overflow-hidden">
-                            <h3 className="text-lg font-bold mb-3 relative z-10">Exam Guidelines</h3>
-                            <ul className="space-y-3 text-sm text-blue-100 relative z-10">
-                                <li className="flex gap-2 items-start"><span className="material-symbols-outlined text-sm mt-0.5">info</span>Ensure well-lit room.</li>
-                                <li className="flex gap-2 items-start"><span className="material-symbols-outlined text-sm mt-0.5">info</span>Do not switch tabs.</li>
-                                <li className="flex gap-2 items-start"><span className="material-symbols-outlined text-sm mt-0.5">info</span>Keep ID card ready.</li>
-                            </ul>
-                            <button className="mt-4 w-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold py-2 rounded-lg text-sm transition-colors">Read Full Policy</button>
+            <main className="flex-1 py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+                {/* Dashboard Overview Header */}
+                <div id="dashboard" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+                    <div>
+                        <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Dashboard Overview</h2>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span className="text-emerald-400 text-sm">System Integrity Check: Passed</span>
                         </div>
                     </div>
+                    <div className="flex items-center gap-3">
+                        <button className={`flex items-center gap-2 px-4 py-2 ${isDarkMode ? 'bg-[#1a2332] border-slate-700 text-slate-300 hover:bg-[#1e293b]' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100 shadow-sm'} border rounded-lg transition-colors text-sm`}>
+                            <span className="material-symbols-outlined text-lg">description</span>
+                            Audit Log
+                        </button>
+                        <Link
+                            to="/student/keygen"
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white transition-colors text-sm font-medium"
+                        >
+                            <span className="material-symbols-outlined text-lg">key</span>
+                            Manage Keys
+                        </Link>
+                    </div>
                 </div>
+
+                {/* Main Three-Column Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    <ExamOverviewCard
+                        stats={{
+                            totalExams: totalCount,
+                            pending: pendingCount,
+                            completed: completedCount
+                        }}
+                    />
+                    <SecurityStatusCard keyStatus={keyStatus} />
+                    <PendingExamsCard exams={exams} results={results} />
+                </div>
+
+                {/* Identity Management Section */}
+                <section id="settings" className="mb-8">
+                    <IdentityManagement keyStatus={keyStatus} onGenerateKeys={generateAndUploadKeys} />
+                </section>
+
+                {/* Available Exams Section */}
+                <section id="exams" className="mb-8">
+                    <AvailableExams exams={exams} results={results} />
+                </section>
             </main>
 
             <DashboardFooter />

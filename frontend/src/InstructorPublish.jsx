@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "./config";
 import { getToken, authFetch } from "./app/auth/authHelpers";
+import { useTheme } from "./context/ThemeContext";
 import {
   bufferToBase64,
   importPrivateKeyFromBase64,
@@ -16,23 +17,14 @@ import {
   exportAesKeyRaw,
   aesGcmEncrypt,
   signWithPrivateKey,
+  canonicalizeJson,
 } from "./cryptoUtils";
 
-/**
- * Canonicalize an object by sorting keys recursively.
- */
-function canonicalize(obj) {
-  if (obj === null || typeof obj !== "object") return obj;
-  if (Array.isArray(obj)) return obj.map(canonicalize);
-  const sorted = {};
-  Object.keys(obj).sort().forEach((key) => {
-    sorted[key] = canonicalize(obj[key]);
-  });
-  return sorted;
-}
+
 
 export default function InstructorPublish() {
   const navigate = useNavigate();
+  const { isDarkMode, toggleTheme } = useTheme();
 
   const [exams, setExams] = useState([]);
   const [selectedExamId, setSelectedExamId] = useState("");
@@ -126,7 +118,7 @@ export default function InstructorPublish() {
         })),
       };
 
-      const mcqJson = JSON.stringify(canonicalize(examPackage));
+      const mcqJson = canonicalizeJson(examPackage);
 
       setStatus("Generating AES-256 key...");
       const aesKey = await generateAesKey();
@@ -168,31 +160,44 @@ export default function InstructorPublish() {
   const isPublished = status.includes("successfully");
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 font-body">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 dark:from-background-dark dark:to-background-dark font-body transition-colors duration-300">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-6 py-4">
+      <header className="bg-white dark:bg-surface-dark border-b border-slate-200 dark:border-slate-700 px-6 py-4 transition-colors duration-300">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center">
               <span className="material-symbols-outlined text-white text-xl">shield</span>
             </div>
-            <span className="font-bold text-slate-900 text-lg">SecureExam Pro</span>
+            <span className="font-bold text-slate-900 dark:text-white text-lg">SecureExam Pro</span>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-full">
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className="relative flex items-center justify-center w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-300"
+              aria-label="Toggle theme"
+            >
+              <span className={`material-symbols-outlined text-lg absolute transition-all duration-300 ${isDarkMode ? 'opacity-0 rotate-90 scale-0' : 'opacity-100 rotate-0 scale-100 text-amber-500'}`}>
+                light_mode
+              </span>
+              <span className={`material-symbols-outlined text-lg absolute transition-all duration-300 ${isDarkMode ? 'opacity-100 rotate-0 scale-100 text-blue-400' : 'opacity-0 -rotate-90 scale-0'}`}>
+                dark_mode
+              </span>
+            </button>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/30 rounded-full">
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span className="text-sm font-medium text-emerald-700">Instructor Authenticated</span>
+              <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">Instructor Authenticated</span>
             </div>
             <div className="text-right">
-              <p className="text-sm font-semibold text-slate-900">Instructor</p>
-              <p className="text-xs text-slate-500">Faculty Portal</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">Instructor</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Faculty Portal</p>
             </div>
           </div>
         </div>
       </header>
 
       {/* Progress Stepper */}
-      <div className="bg-white border-b border-slate-100 px-6 py-4">
+      <div className="bg-white dark:bg-surface-dark border-b border-slate-100 dark:border-slate-700 px-6 py-4 transition-colors duration-300">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-slate-600">
@@ -219,22 +224,22 @@ export default function InstructorPublish() {
       <main className="max-w-4xl mx-auto px-6 py-10">
         {/* Title */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Publish Exam Securely</h1>
-          <p className="text-slate-500">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Publish Exam Securely</h1>
+          <p className="text-slate-500 dark:text-slate-300">
             Finalize cryptographic settings before distributing to students. This action is irreversible.
           </p>
         </div>
 
         {/* Error */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-700">
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-3 text-red-700 dark:text-red-400">
             <span className="material-symbols-outlined">error</span>
             <p className="text-sm font-medium">{error}</p>
           </div>
         )}
 
         {/* Main Card */}
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+        <div className="bg-white dark:bg-surface-dark rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors duration-300">
           {/* Exam Selection */}
           <div className="p-6 border-b border-slate-100">
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Exam Title (Draft)</p>
@@ -251,7 +256,7 @@ export default function InstructorPublish() {
                   <select
                     value={selectedExamId}
                     onChange={(e) => setSelectedExamId(e.target.value)}
-                    className="flex-1 text-lg font-semibold text-slate-900 bg-transparent border-0 focus:ring-0 cursor-pointer"
+                    className="flex-1 text-lg font-semibold text-slate-900 dark:text-white bg-transparent dark:bg-slate-800 border-0 focus:ring-0 cursor-pointer"
                   >
                     <option value="">Select an exam...</option>
                     {exams.map((exam) => (
@@ -276,8 +281,8 @@ export default function InstructorPublish() {
               {/* Left - Security Info */}
               <div>
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="material-symbols-outlined text-blue-600">verified_user</span>
-                  <h3 className="font-bold text-slate-900">Security Protocols Applied</h3>
+                  <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">verified_user</span>
+                  <h3 className="font-bold text-slate-900 dark:text-white">Security Protocols Applied</h3>
                 </div>
 
                 {/* Encryption Policy Box */}
@@ -341,10 +346,10 @@ export default function InstructorPublish() {
                       onClick={publish}
                       disabled={isPublishing || isPublished}
                       className={`w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-semibold transition-all ${isPublished
-                          ? 'bg-emerald-600 text-white cursor-default'
-                          : isPublishing
-                            ? 'bg-blue-400 text-white cursor-wait'
-                            : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/25'
+                        ? 'bg-emerald-600 text-white cursor-default'
+                        : isPublishing
+                          ? 'bg-blue-400 text-white cursor-wait'
+                          : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/25'
                         }`}
                     >
                       {isPublished ? (

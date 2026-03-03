@@ -1,4 +1,28 @@
-// Lightweight Web Crypto helpers for the instructor publish page
+// ===================================
+// CANONICAL JSON SERIALIZATION
+// ===================================
+
+/**
+ * Canonicalize a JavaScript object to JSON string with sorted keys.
+ * This ensures consistent serialization for signing/hashing.
+ * @param {Object} obj - Object to canonicalize
+ * @returns {string} Canonical JSON string
+ */
+export function canonicalizeJson(obj) {
+  if (obj === null) return 'null';
+  if (typeof obj !== 'object') return JSON.stringify(obj);
+  if (Array.isArray(obj)) {
+    return '[' + obj.map(item => canonicalizeJson(item)).join(',') + ']';
+  }
+  const keys = Object.keys(obj).sort();
+  const pairs = keys.map(key => `"${key}":${canonicalizeJson(obj[key])}`);
+  return '{' + pairs.join(',') + '}';
+}
+
+// ===================================
+// BASE64 ENCODING/DECODING
+// ===================================
+
 export function bufferToBase64(buffer) {
   const bytes = new Uint8Array(buffer);
   let binary = "";
@@ -95,7 +119,14 @@ export async function importAesKeyRaw(b64raw) {
   );
 }
 
+/**
+ * Encrypt plaintext using AES-GCM.
+ * @param {CryptoKey} key - AES-GCM key
+ * @param {string} plaintext - Text to encrypt
+ * @returns {Object} Object with cipher (Uint8Array) and iv (Uint8Array)
+ */
 export async function aesGcmEncrypt(key, plaintext) {
+  // AES-GCM: use 12-byte (96-bit) IV for best performance
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const enc = new TextEncoder();
   const cipher = await window.crypto.subtle.encrypt(
@@ -106,8 +137,14 @@ export async function aesGcmEncrypt(key, plaintext) {
   return { cipher: new Uint8Array(cipher), iv };
 }
 
+/**
+ * Sign data using RSA-PSS private key.
+ * @param {CryptoKey} privateKey - RSA-PSS private key
+ * @param {Uint8Array} dataUint8 - Data to sign
+ * @returns {string} Base64-encoded signature
+ */
 export async function signWithPrivateKey(privateKey, dataUint8) {
-  // RSA-PSS signature over the ciphertext
+  // RSA-PSS: saltLength must match hash output (SHA-256 = 32 bytes)
   const signature = await window.crypto.subtle.sign(
     { name: 'RSA-PSS', saltLength: 32 },
     privateKey,

@@ -1,79 +1,92 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useTheme } from "../../../context/ThemeContext";
+
+// Exam subject icons mapping
+const getExamIcon = (title) => {
+    const titleLower = title?.toLowerCase() || '';
+    if (titleLower.includes('database') || titleLower.includes('sql')) return { icon: 'storage', color: 'bg-teal-500/20 text-teal-400' };
+    if (titleLower.includes('network') || titleLower.includes('security')) return { icon: 'hub', color: 'bg-amber-500/20 text-amber-400' };
+    if (titleLower.includes('algorithm') || titleLower.includes('data structure')) return { icon: 'account_tree', color: 'bg-purple-500/20 text-purple-400' };
+    if (titleLower.includes('web') || titleLower.includes('frontend')) return { icon: 'web', color: 'bg-blue-500/20 text-blue-400' };
+    if (titleLower.includes('machine') || titleLower.includes('ai')) return { icon: 'psychology', color: 'bg-pink-500/20 text-pink-400' };
+    return { icon: 'school', color: 'bg-indigo-500/20 text-indigo-400' };
+};
 
 export default function AvailableExams({ exams, results = [] }) {
+    const { isDarkMode } = useTheme();
     // Create a set of exam IDs that have results
     const examsWithResults = new Set(results.map(r => r.exam_id));
+    // Only show exams that haven't been completed
+    const pendingExams = exams.filter(exam => !examsWithResults.has(exam.exam_id));
 
     return (
-        <section>
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-slate-800 dark:text-white font-display">Available Exams</h3>
-                <div className="flex gap-2">
-                    <button className="px-4 py-2 text-sm font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg">All</button>
-                    <button className="px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-lg transition-colors">Active</button>
-                    <button className="px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-lg transition-colors">Upcoming</button>
-                </div>
+        <section id="exams">
+            <div className="mb-6">
+                <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'} font-display`}>Upcoming Exams</h3>
+                <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'} mt-1`}>
+                    Secure environment active. Please ensure your workstation meets the integrity requirements before beginning any session.
+                </p>
             </div>
 
-            <div className="space-y-4">
-                {exams.length > 0 ? exams.map((exam) => {
-                    const hasResult = examsWithResults.has(exam.exam_id);
-                    const result = results.find(r => r.exam_id === exam.exam_id);
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                {pendingExams.length > 0 ? pendingExams.map((exam) => {
+                    const { icon, color } = getExamIcon(exam.title);
+                    const examDate = new Date(exam.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
                     return (
-                        <div key={exam.exam_id} className="bg-white dark:bg-[#1e1e1e] rounded-xl border border-slate-200 dark:border-neutral-700 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 hover:shadow-md transition-shadow">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <span className="bg-indigo-600 dark:bg-indigo-500 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">EXAM-{exam.exam_id?.slice(0, 4)}</span>
-                                    {hasResult ? (
-                                        <span className="flex items-center gap-1 text-xs font-semibold text-blue-500 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded border border-blue-100 dark:border-blue-500/20">
-                                            <span className="material-symbols-outlined text-sm">check_circle</span> Completed
-                                        </span>
-                                    ) : (
-                                        <span className="flex items-center gap-1 text-xs font-semibold text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-100 dark:border-emerald-500/20">
-                                            <span className="material-symbols-outlined text-sm">lock_open</span> Open Now
-                                        </span>
-                                    )}
+                        <div
+                            key={exam.exam_id}
+                            className={`rounded-xl border p-5 transition-all hover:shadow-lg group ${isDarkMode
+                                    ? 'bg-[#1a2332] border-slate-700/50 hover:border-emerald-500/50'
+                                    : 'bg-white border-slate-200 hover:border-emerald-300'
+                                }`}
+                        >
+                            {/* Icon and Title */}
+                            <div className="flex items-start gap-3 mb-4">
+                                <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${color}`}>
+                                    <span className="material-symbols-outlined text-xl">{icon}</span>
                                 </div>
-                                <h4 className="text-lg font-bold text-slate-800 dark:text-white mb-1">{exam.title}</h4>
-                                <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">{exam.description || 'No description available'}</p>
-                                <div className="flex flex-wrap gap-4 text-sm text-slate-500 dark:text-slate-400">
-                                    <span className="flex items-center gap-1"><span className="material-symbols-outlined text-lg">schedule</span> {exam.duration_minutes || 120} mins</span>
-                                    <span className="flex items-center gap-1"><span className="material-symbols-outlined text-lg">calendar_today</span> {new Date(exam.created_at).toLocaleDateString()}</span>
-                                    {hasResult && (
-                                        <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-medium">
-                                            <span className="material-symbols-outlined text-lg">grade</span> Score: {result.marks}/100
-                                        </span>
-                                    )}
+                                <div className="flex-1 min-w-0">
+                                    <h4 className={`font-bold truncate ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+                                        {exam.title}
+                                    </h4>
+                                    <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                                        {examDate} • {exam.duration_minutes || 120}mins
+                                    </p>
                                 </div>
                             </div>
-                            <div className="flex flex-col items-end gap-2 w-full md:w-auto">
-                                {hasResult ? (
-                                    <Link
-                                        to={`/student/results/${exam.exam_id}`}
-                                        className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-6 rounded-lg transition-all shadow-md flex items-center justify-center gap-2"
-                                    >
-                                        <span className="material-symbols-outlined text-sm">verified</span>
-                                        View Result
-                                    </Link>
-                                ) : (
-                                    <Link
-                                        to="/student/decrypt"
-                                        className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-bold py-2.5 px-6 rounded-lg transition-all shadow-md flex items-center justify-center gap-2"
-                                    >
-                                        View Exam <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                                    </Link>
-                                )}
-                                <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-emerald-500 text-sm">verified</span> {hasResult ? "Signature Verified" : "Encrypted"}
+
+                            {/* Status and Action */}
+                            <div className="flex items-center justify-between">
+                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${isDarkMode
+                                        ? 'bg-emerald-500/20 text-emerald-400'
+                                        : 'bg-emerald-100 text-emerald-600'
+                                    }`}>
+                                    <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
+                                    READY
                                 </span>
+
+                                <Link
+                                    to={`/student/decrypt/${exam.exam_id}`}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-colors"
+                                >
+                                    <span className="material-symbols-outlined text-sm">lock_open</span>
+                                    Decrypt & Start
+                                </Link>
                             </div>
                         </div>
                     );
                 }) : (
-                    <div className="p-10 bg-white dark:bg-[#1e1e1e] border border-dashed border-slate-300 dark:border-neutral-700 rounded-xl text-center">
-                        <p className="text-slate-500 dark:text-slate-400">No exams available at the moment.</p>
+                    <div className={`col-span-full p-10 border border-dashed rounded-xl text-center ${isDarkMode
+                        ? 'bg-[#1a2332] border-slate-700'
+                        : 'bg-white border-slate-300'
+                        }`}>
+                        <div className={`w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center ${isDarkMode ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-400'
+                            }`}>
+                            <span className="material-symbols-outlined text-2xl">event_busy</span>
+                        </div>
+                        <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>No exams available at the moment.</p>
                     </div>
                 )}
             </div>

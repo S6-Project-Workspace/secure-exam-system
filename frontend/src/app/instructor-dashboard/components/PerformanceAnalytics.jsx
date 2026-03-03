@@ -4,23 +4,23 @@ export default function PerformanceAnalytics() {
     return (
         <section aria-label="Performance Analytics">
             <div className="flex items-center gap-2 mb-4">
-                <span className="material-symbols-outlined text-slate-500">monitoring</span>
-                <h2 className="text-xl font-bold text-slate-800">Performance Analytics</h2>
+                <span className="material-symbols-outlined text-slate-500 dark:text-slate-400">monitoring</span>
+                <h2 className="text-xl font-bold text-slate-800 dark:text-white">Performance Analytics</h2>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Class Performance Trends Chart */}
-                <div className="lg:col-span-2 bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex flex-col">
+                <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
                     <div className="flex justify-between items-center mb-6">
                         <div>
-                            <h3 className="text-lg font-bold text-slate-800">Class Performance Trends</h3>
-                            <p className="text-xs text-slate-500 mt-1">Average scores across all exams (Last 6 Months)</p>
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-white">Class Performance Trends</h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Average scores across all exams (Last 6 Months)</p>
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className="flex items-center gap-1 text-xs font-medium text-slate-500">
+                            <span className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400">
                                 <span className="w-2 h-2 rounded-full bg-indigo-600"></span>Avg. Score
                             </span>
-                            <select className="text-xs border-slate-200 rounded-md bg-transparent text-slate-500 py-1 pl-2 pr-6 focus:ring-indigo-600 focus:border-indigo-600">
+                            <select className="text-xs border-slate-200 dark:border-slate-700 dark:bg-slate-800 rounded-md bg-transparent text-slate-500 dark:text-slate-400 py-1 pl-2 pr-6 focus:ring-indigo-600 focus:border-indigo-600">
                                 <option>Last 6 Months</option>
                                 <option>Academic Year</option>
                             </select>
@@ -29,11 +29,11 @@ export default function PerformanceAnalytics() {
 
                     <div className="flex-grow w-full relative h-48 sm:h-56">
                         {/* Grid lines */}
-                        <div className="absolute inset-0 flex flex-col justify-between text-xs text-slate-300 pointer-events-none">
-                            <div className="border-b border-dashed border-slate-200 w-full h-0"></div>
-                            <div className="border-b border-dashed border-slate-200 w-full h-0"></div>
-                            <div className="border-b border-dashed border-slate-200 w-full h-0"></div>
-                            <div className="border-b border-dashed border-slate-200 w-full h-0"></div>
+                        <div className="absolute inset-0 flex flex-col justify-between text-xs text-slate-300 dark:text-slate-600 pointer-events-none">
+                            <div className="border-b border-dashed border-slate-200 dark:border-slate-700 w-full h-0"></div>
+                            <div className="border-b border-dashed border-slate-200 dark:border-slate-700 w-full h-0"></div>
+                            <div className="border-b border-dashed border-slate-200 dark:border-slate-700 w-full h-0"></div>
+                            <div className="border-b border-dashed border-slate-200 dark:border-slate-700 w-full h-0"></div>
                         </div>
 
                         <svg className="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 40">
@@ -48,7 +48,7 @@ export default function PerformanceAnalytics() {
                         </svg>
                     </div>
 
-                    <div className="flex justify-between text-xs text-slate-500 mt-2 px-0">
+                    <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mt-2 px-0">
                         <span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span>
                     </div>
                 </div>
@@ -56,13 +56,13 @@ export default function PerformanceAnalytics() {
                 {/* Right Column - Grade Distribution + Trouble Spots */}
                 <div className="lg:col-span-1 flex flex-col gap-6">
                     {/* Grade Distribution */}
-                    <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
                         <div className="mb-4">
-                            <h3 className="text-lg font-bold text-slate-800">Grade Distribution</h3>
-                            <p className="text-xs text-slate-500">Most Recent Exam: CS-402</p>
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-white">Grade Distribution</h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Most Recent Exam: CS-402</p>
                         </div>
 
-                        <div className="h-40 flex items-end justify-between gap-2 text-xs font-medium text-slate-500">
+                        <div className="h-40 flex items-end justify-between gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
                             <div className="flex flex-col items-center gap-1 w-full group cursor-pointer">
                                 <span className="opacity-0 group-hover:opacity-100 transition-opacity mb-1 text-[10px] font-bold text-emerald-500">12</span>
                                 <div className="w-full bg-emerald-500 rounded-t-sm hover:opacity-90 transition-opacity" style={{ height: "60%" }}></div>
@@ -92,37 +92,37 @@ export default function PerformanceAnalytics() {
                     </div>
 
                     {/* Trouble Spots */}
-                    <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex-grow">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm flex-grow">
                         <div className="flex items-center gap-2 mb-4 text-red-500">
                             <span className="material-symbols-outlined text-[20px]">warning</span>
-                            <h3 className="text-base font-bold text-slate-800">Trouble Spots</h3>
+                            <h3 className="text-base font-bold text-slate-800 dark:text-white">Trouble Spots</h3>
                         </div>
 
                         <div className="space-y-4">
                             <div>
                                 <div className="flex justify-between text-xs mb-1">
-                                    <span className="font-medium text-slate-700">RSA Key Generation</span>
+                                    <span className="font-medium text-slate-700 dark:text-slate-300">RSA Key Generation</span>
                                     <span className="font-bold text-red-500">68% Incorrect</span>
                                 </div>
-                                <div className="w-full bg-slate-100 rounded-full h-1.5">
+                                <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5">
                                     <div className="bg-red-500 h-1.5 rounded-full" style={{ width: "68%" }}></div>
                                 </div>
                             </div>
                             <div>
                                 <div className="flex justify-between text-xs mb-1">
-                                    <span className="font-medium text-slate-700">Elliptic Curve Logic</span>
+                                    <span className="font-medium text-slate-700 dark:text-slate-300">Elliptic Curve Logic</span>
                                     <span className="font-bold text-amber-500">45% Incorrect</span>
                                 </div>
-                                <div className="w-full bg-slate-100 rounded-full h-1.5">
+                                <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5">
                                     <div className="bg-amber-500 h-1.5 rounded-full" style={{ width: "45%" }}></div>
                                 </div>
                             </div>
                             <div>
                                 <div className="flex justify-between text-xs mb-1">
-                                    <span className="font-medium text-slate-700">Digital Signatures</span>
+                                    <span className="font-medium text-slate-700 dark:text-slate-300">Digital Signatures</span>
                                     <span className="font-bold text-amber-500">32% Incorrect</span>
                                 </div>
-                                <div className="w-full bg-slate-100 rounded-full h-1.5">
+                                <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5">
                                     <div className="bg-amber-500 h-1.5 rounded-full" style={{ width: "32%" }}></div>
                                 </div>
                             </div>

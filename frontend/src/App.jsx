@@ -27,9 +27,8 @@ function App() {
         <Route element={<ProtectedRoute allowedRole="student" />}>
           <Route path="/student/dashboard" element={<StudentDashboard />} />
           <Route path="/student/keygen" element={<StudentKeyGen />} />
-          <Route path="/student/decrypt" element={<StudentExamDecrypt />} />
+          <Route path="/student/decrypt/:examId" element={<StudentExamDecrypt />} />
           <Route path="/student/results/:examId" element={<StudentViewResult />} />
-          <Route path="/dummy/student-keygen" element={<StudentKeyGen />} />
         </Route>
 
         {/* Protected Instructor Routes */}
@@ -40,7 +39,6 @@ function App() {
           <Route path="/instructor/exams/:examId/questions" element={<AddMCQs />} />
           <Route path="/instructor/publish" element={<InstructorPublish />} />
           <Route path="/instructor/evaluate" element={<InstructorEvaluate />} />
-          <Route path="/dummy/instructor-keygen" element={<InstructorKeyGen />} />
         </Route>
       </Routes>
     </BrowserRouter>
