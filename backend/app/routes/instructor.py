@@ -44,7 +44,52 @@ def list_submissions_for_instructor(exam_id: str, user=Depends(get_current_user)
             "iv": s.get("iv"),
             "student_signature": s.get("student_signature"),
             "wrapped_aes_key_for_instructor": wrapped,
-            "created_at": s.get("created_at"),
+            "submitted_at": s.get("submitted_at") or s.get("created_at"),
         })
 
     return {"submissions": out}
+
+
+@router.get("/exam/{exam_id}/answer-key")
+def get_answer_key(exam_id: str, user=Depends(get_current_user)):
+    """
+    Return the full answer key (questions + correct answers) for auto-grading.
+    Only the exam owner (instructor) can access this.
+    """
+    if user.get("role") != "instructor":
+        raise HTTPException(status_code=403, detail="Only instructors can access answer keys")
+
+    instructor_id = user.get("sub")
+
+    # Verify instructor owns the exam
+    exam = supabase.table("exams").select("*").eq("exam_id", exam_id).execute()
+    if not exam.data:
+        raise HTTPException(status_code=404, detail="Exam not found")
+
+    if exam.data[0].get("instructor_id") != instructor_id:
+        raise HTTPException(status_code=403, detail="Not authorized for this exam")
+
+    # Fetch all questions with correct answers
+    questions = supabase.table("questions").select("*").eq("exam_id", exam_id).execute()
+
+    answer_key = []
+    for q in (questions.data or []):
+        answer_key.append({
+            "question_id": q.get("id") or q.get("question_id"),
+            "question_text": q.get("question_text"),
+            "option_a": q.get("option_a"),
+            "option_b": q.get("option_b"),
+            "option_c": q.get("option_c"),
+            "option_d": q.get("option_d"),
+            "correct_answer": q.get("correct_answer"),
+            "marks": q.get("marks", 1),
+        })
+
+    return {
+        "exam_id": exam_id,
+        "title": exam.data[0].get("title"),
+        "total_questions": len(answer_key),
+        "total_marks": sum(q["marks"] for q in answer_key),
+        "questions": answer_key,
+    }
+

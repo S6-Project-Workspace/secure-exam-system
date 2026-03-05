@@ -130,7 +130,7 @@ def get_my_all_results(user=Depends(get_current_user)):
 
     student_id = user.get("sub")
     try:
-        rec = supabase.table("results").select("*").eq("student_id", student_id).order("evaluated_at", desc=True).execute()
+        rec = supabase.table("results").select("*").eq("student_id", student_id).execute()
         return {"results": rec.data or []}
     except Exception as e:
         # Table might not exist yet
