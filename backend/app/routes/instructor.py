@@ -30,7 +30,7 @@ def list_submissions_for_instructor(exam_id: str, user=Depends(get_current_user)
 
     out = []
     for s in subs.data:
-        submission_id = s.get("submission_id") or s.get("id")
+        submission_id = s.get("sub_id") or s.get("submission_id") or s.get("id")
         # Get wrapped AES key for instructor (if stored)
         key_rec = supabase.table("submission_keys").select("wrapped_key").eq("submission_id", submission_id).execute()
         wrapped = None

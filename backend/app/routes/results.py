@@ -102,7 +102,6 @@ def publish_result(payload: PublishResultRequest, user=Depends(get_current_user)
         "instructor_id": instructor_id,
         "instructor_signature": payload.instructor_signature,
         "evaluated_at": payload.evaluated_at,
-        "created_at": datetime.utcnow().isoformat(),
     }
 
     res = supabase.table("results").insert(record).execute()
@@ -114,7 +113,6 @@ def publish_result(payload: PublishResultRequest, user=Depends(get_current_user)
         "user_id": instructor_id,
         "event_type": "publish_result",
         "event_details": f"Published result for exam {payload.exam_id}, student {payload.student_id}",
-        "timestamp": datetime.utcnow().isoformat(),
     }).execute()
 
     return {"message": "Result published", "result": record}

@@ -103,7 +103,6 @@ def publish_exam(payload: PublishExamRequest, user=Depends(get_current_user)):
             "tag": base64.b64encode(gcm_tag).decode(),
             "signature": payload.signature,
             "aes_key_b64": payload.aes_key,  # Store for late key-wrapping
-            "created_at": datetime.utcnow().isoformat()
         }).execute()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to store exam package: {e}")
@@ -181,7 +180,6 @@ def publish_exam(payload: PublishExamRequest, user=Depends(get_current_user)):
         "user_id": instructor_id,
         "event_type": "publish_exam",
         "event_details": f"Published exam {exam_id}",
-        "timestamp": datetime.utcnow().isoformat()
     }).execute()
 
     return {"message": "Exam published", "package_id": package_id}

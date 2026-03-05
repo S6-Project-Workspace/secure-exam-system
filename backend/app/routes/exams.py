@@ -80,7 +80,7 @@ def get_exam_package(exam_id: str, user=Depends(get_current_user)):
     exam_info = exam.data[0]
 
     # Fetch the latest package for this exam
-    pkg = supabase.table("exam_packages").select("encrypted_mcqs, iv, tag, signature, created_at").eq("exam_id", exam_id).order("created_at", desc=True).limit(1).execute()
+    pkg = supabase.table("exam_packages").select("*").eq("exam_id", exam_id).limit(1).execute()
     if not pkg.data:
         raise HTTPException(status_code=404, detail="Exam package not found")
 
@@ -95,7 +95,6 @@ def get_exam_package(exam_id: str, user=Depends(get_current_user)):
         "iv": p.get("iv"),
         "tag": p.get("tag"),
         "signature": p.get("signature"),
-        "created_at": p.get("created_at")
     }
 
 

@@ -90,7 +90,6 @@ def upload_public_key(public_key: str, user=Depends(get_current_user)):
         # Update key
         result = supabase.table("public_keys").update({
             "public_key": public_key,
-            "updated_at": datetime.utcnow().isoformat()
         }).eq("user_id", user_id).execute()
 
         # Retroactively wrap keys for students

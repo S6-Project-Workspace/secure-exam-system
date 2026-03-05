@@ -226,14 +226,17 @@ export default function StudentExamDecrypt() {
         })),
         submitted_at: new Date().toISOString()
       };
+      console.log("[SUBMIT] Step 1 - Answers data:", answersData);
 
       // 2. Use canonical JSON serialization for consistent signing
       const answersJson = canonicalizeJson(answersData);
+      console.log("[SUBMIT] Step 2 - Canonical JSON length:", answersJson.length);
 
       // 3. Compute SHA-256 hash
       setSubmitStatus("Computing hash...");
       const hashBuf = await window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(answersJson));
       const hashB64 = bufferToBase64(hashBuf);
+      console.log("[SUBMIT] Step 3 - Hash computed:", hashB64.slice(0, 20) + "...");
 
       // 4. Sign hash with RSA-PSS private key
       setSubmitStatus("Signing answers...");
@@ -242,21 +245,28 @@ export default function StudentExamDecrypt() {
 
       const pssPrivateKey = await importPrivateKeyFromBase64(signPrivKey);
       const signatureB64 = await signWithPrivateKey(pssPrivateKey, new Uint8Array(hashBuf));
+      console.log("[SUBMIT] Step 4 - Signature computed");
 
       // 5. Generate fresh AES key
       setSubmitStatus("Generating encryption key...");
       const aesKey = await generateAesKey();
+      console.log("[SUBMIT] Step 5 - AES key generated");
 
       // 6. Encrypt answers
       setSubmitStatus("Encrypting answers...");
       const { cipher, iv } = await aesGcmEncrypt(aesKey, answersJson);
-      const encryptedAnswersB64 = bufferToBase64(cipher.buffer);
-      const ivB64 = bufferToBase64(iv.buffer);
+      // Use slice to get exact bytes (avoid underlying buffer size mismatch)
+      const encryptedAnswersB64 = bufferToBase64(cipher.buffer.byteLength === cipher.byteLength ? cipher.buffer : cipher.slice().buffer);
+      const ivB64 = bufferToBase64(iv.buffer.byteLength === iv.byteLength ? iv.buffer : iv.slice().buffer);
+      console.log("[SUBMIT] Step 6 - Encrypted. Cipher length:", cipher.byteLength, "IV length:", iv.byteLength);
 
       // 7. Wrap AES key for instructor
       setSubmitStatus("Wrapping key for instructor...");
       const instrKeyRes = await authFetch(`${API_BASE_URL}/keys/get?user_id=${examData.instructor_id}`);
-      if (!instrKeyRes.ok) throw new Error("Failed to fetch instructor public key");
+      if (!instrKeyRes.ok) {
+        const errData = await instrKeyRes.json().catch(() => ({}));
+        throw new Error(errData.detail || "Failed to fetch instructor public key");
+      }
 
       const instrKeyData = await instrKeyRes.json();
       let instrOaepPem = instrKeyData.public_key;
@@ -271,22 +281,28 @@ export default function StudentExamDecrypt() {
       const instrPubKey = await importRsaOaepPublicKeyFromPem(instrOaepPem);
       const rawAesKey = await window.crypto.subtle.exportKey("raw", aesKey);
       const wrappedKeyB64 = await rsaOaepEncrypt(instrPubKey, rawAesKey);
+      console.log("[SUBMIT] Step 7 - Key wrapped for instructor");
 
       // 8. Submit to backend
       setSubmitStatus("Submitting...");
+      const submissionPayload = {
+        exam_id: examId,
+        encrypted_answers: encryptedAnswersB64,
+        iv: ivB64,
+        encrypted_aes_key: wrappedKeyB64,
+        student_signature: signatureB64,
+        hash: hashB64
+      };
+      console.log("[SUBMIT] Step 8 - Sending payload, IV b64 length:", ivB64.length);
+
       const response = await authFetch(`${API_BASE_URL}/submissions`, {
         method: "POST",
-        body: JSON.stringify({
-          exam_id: examId,
-          encrypted_answers: encryptedAnswersB64,
-          iv: ivB64,
-          encrypted_aes_key: wrappedKeyB64,
-          student_signature: signatureB64,
-          hash: hashB64
-        })
+        body: JSON.stringify(submissionPayload)
       });
 
       const data = await response.json();
+      console.log("[SUBMIT] Response status:", response.status, "Data:", data);
+
       if (!response.ok) throw new Error(data.detail || "Submission failed");
 
       setSubmitStatus("✓ Answers submitted successfully!");
@@ -297,7 +313,9 @@ export default function StudentExamDecrypt() {
         navigate("/student/dashboard");
       }, 2000);
     } catch (err) {
+      console.error("[SUBMIT] ERROR:", err);
       setSubmitStatus(`Error: ${err.message}`);
+      alert(`Submission error: ${err.message}`);
     } finally {
       setIsSubmitting(false);
     }

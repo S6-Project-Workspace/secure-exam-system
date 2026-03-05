@@ -24,106 +24,130 @@ class SubmissionPayload(BaseModel):
 
 @router.post("")
 def submit_answers(payload: SubmissionPayload, user=Depends(get_current_user)):
-    # Only students may submit
-    if user.get("role") != "student":
-        raise HTTPException(status_code=403, detail="Only students can submit answers")
-
-    student_id = user.get("sub")
-
-    # Fetch student's public key
-    rec = supabase.table("public_keys").select("public_key").eq("user_id", student_id).execute()
-    if not rec.data:
-        raise HTTPException(status_code=400, detail="Student public key missing")
-
-    stored = rec.data[0]["public_key"]
-
-    # stored may be a JSON string containing multiple keys (oaep/pss) or a PEM string
-    pss_pem = None
     try:
-        # detect JSON
-        if isinstance(stored, str) and stored.strip().startswith("{"):
-            import json
+        # Only students may submit
+        if user.get("role") != "student":
+            raise HTTPException(status_code=403, detail="Only students can submit answers")
 
-            parsed = json.loads(stored)
-            pss_pem = parsed.get("pss") or parsed.get("pss_public")
-        else:
+        student_id = user.get("sub")
+        print(f"[SUBMIT] Student {student_id} submitting for exam {payload.exam_id}")
+
+        # Fetch student's public key
+        rec = supabase.table("public_keys").select("public_key").eq("user_id", student_id).execute()
+        if not rec.data:
+            raise HTTPException(status_code=400, detail="Student public key missing")
+
+        stored = rec.data[0]["public_key"]
+
+        # stored may be a JSON string containing multiple keys (oaep/pss) or a PEM string
+        pss_pem = None
+        try:
+            # detect JSON
+            if isinstance(stored, str) and stored.strip().startswith("{"):
+                import json
+
+                parsed = json.loads(stored)
+                pss_pem = parsed.get("pss") or parsed.get("pss_public")
+            else:
+                pss_pem = stored
+        except Exception:
             pss_pem = stored
-    except Exception:
-        pss_pem = stored
 
-    if not pss_pem:
-        raise HTTPException(status_code=400, detail="Student signing public key missing")
+        if not pss_pem:
+            raise HTTPException(status_code=400, detail="Student signing public key missing")
 
-    try:
-        pub_key = load_pem_public_key(pss_pem.encode())
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid stored student public key: {e}")
+        try:
+            pub_key = load_pem_public_key(pss_pem.encode())
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid stored student public key: {e}")
 
-    # Verify signature over provided hash
-    try:
-        sig = base64.b64decode(payload.student_signature)
-        hash_bytes = base64.b64decode(payload.hash)
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid base64 in signature or hash")
+        # Verify signature over provided hash
+        try:
+            sig = base64.b64decode(payload.student_signature)
+            hash_bytes = base64.b64decode(payload.hash)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid base64 in signature or hash")
 
-    try:
-        pub_key.verify(
-            sig,
-            hash_bytes,
-            asym_padding.PSS(
-                mgf=asym_padding.MGF1(hashes.SHA256()),
-                salt_length=32,  # Match Web Crypto API saltLength: 32
-            ),
-            hashes.SHA256(),
-        )
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid signature: {e}")
+        print(f"[SUBMIT] Verifying signature. Sig length: {len(sig)}, Hash length: {len(hash_bytes)}")
 
-    # Basic validation of fields (lengths, base64 correctness)
-    try:
-        _ = base64.b64decode(payload.encrypted_answers)
-        iv_bytes = base64.b64decode(payload.iv)
-        _ = base64.b64decode(payload.encrypted_aes_key)
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid base64 in submission fields")
+        try:
+            pub_key.verify(
+                sig,
+                hash_bytes,
+                asym_padding.PSS(
+                    mgf=asym_padding.MGF1(hashes.SHA256()),
+                    salt_length=32,  # Match Web Crypto API saltLength: 32
+                ),
+                hashes.SHA256(),
+            )
+            print("[SUBMIT] Signature verified OK")
+        except Exception as e:
+            print(f"[SUBMIT] Signature verification FAILED: {e}")
+            raise HTTPException(status_code=400, detail=f"Invalid signature: {e}")
 
-    if len(iv_bytes) != 12:
-        raise HTTPException(status_code=400, detail="Invalid IV length; expected 12 bytes for AES-GCM")
+        # Basic validation of fields (lengths, base64 correctness)
+        try:
+            _ = base64.b64decode(payload.encrypted_answers)
+            iv_bytes = base64.b64decode(payload.iv)
+            _ = base64.b64decode(payload.encrypted_aes_key)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid base64 in submission fields")
 
-    # At this point signature validated; server stores only encrypted data
-    res = supabase.table("submissions").insert({
-        "exam_id": payload.exam_id,
-        "student_id": student_id,
-        "encrypted_answers": payload.encrypted_answers,
-        "iv": payload.iv,
-        "student_signature": payload.student_signature,
-        "hash": payload.hash,
-        "created_at": datetime.utcnow().isoformat(),
-    }).execute()
+        if len(iv_bytes) != 12:
+            raise HTTPException(status_code=400, detail=f"Invalid IV length; expected 12 bytes for AES-GCM, got {len(iv_bytes)}")
 
-    if not res.data:
-        raise HTTPException(status_code=500, detail="Failed to store submission")
+        print(f"[SUBMIT] Validation passed. IV length: {len(iv_bytes)}")
 
-    submission_id = res.data[0].get("submission_id") or res.data[0].get("id")
-
-    # Store wrapped AES key for instructor (so instructor can later decrypt)
-    try:
-        supabase.table("submission_keys").insert({
-            "submission_id": submission_id,
+        # At this point signature validated; server stores only encrypted data
+        print("[SUBMIT] Inserting into submissions table...")
+        res = supabase.table("submissions").insert({
             "exam_id": payload.exam_id,
             "student_id": student_id,
-            "wrapped_key": payload.encrypted_aes_key,
+            "encrypted_answers": payload.encrypted_answers,
+            "iv": payload.iv,
+            "student_signature": payload.student_signature,
+            "hash": payload.hash,
         }).execute()
-    except Exception:
-        # don't leak details; submission already stored
-        pass
 
-    # Audit log
-    supabase.table("audit_logs").insert({
-        "user_id": student_id,
-        "event_type": "submit_exam",
-        "event_details": f"Submitted answers for exam {payload.exam_id}",
-        "timestamp": datetime.utcnow().isoformat(),
-    }).execute()
+        if not res.data:
+            raise HTTPException(status_code=500, detail="Failed to store submission")
 
-    return {"message": "Submission recorded", "submission_id": submission_id}
+        submission_id = res.data[0].get("sub_id") or res.data[0].get("submission_id") or res.data[0].get("id")
+        print(f"[SUBMIT] Submission stored: {submission_id}")
+
+        # Store wrapped AES key for instructor (so instructor can later decrypt)
+        try:
+            print("[SUBMIT] Inserting into submission_keys table...")
+            supabase.table("submission_keys").insert({
+                "submission_id": submission_id,
+                "exam_id": payload.exam_id,
+                "student_id": student_id,
+                "wrapped_key": payload.encrypted_aes_key,
+            }).execute()
+            print("[SUBMIT] submission_keys stored OK")
+        except Exception as e:
+            print(f"[SUBMIT] WARNING: submission_keys insert failed: {e}")
+            # don't leak details; submission already stored
+            pass
+
+        # Audit log
+        try:
+            supabase.table("audit_logs").insert({
+                "user_id": student_id,
+                "event_type": "submit_exam",
+                "event_details": f"Submitted answers for exam {payload.exam_id}",
+            }).execute()
+        except Exception as e:
+            print(f"[SUBMIT] WARNING: audit_log insert failed: {e}")
+
+        print(f"[SUBMIT] SUCCESS for student {student_id}")
+        return {"message": "Submission recorded", "submission_id": submission_id}
+
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions as-is
+    except Exception as e:
+        import traceback
+        print(f"[SUBMIT] UNHANDLED ERROR: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Submission failed: {str(e)}")
+
