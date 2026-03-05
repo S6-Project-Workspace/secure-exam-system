@@ -10,12 +10,20 @@
  */
 export function canonicalizeJson(obj) {
   if (obj === null) return 'null';
+  if (typeof obj === 'undefined') return undefined; // signal to skip
   if (typeof obj !== 'object') return JSON.stringify(obj);
   if (Array.isArray(obj)) {
-    return '[' + obj.map(item => canonicalizeJson(item)).join(',') + ']';
+    // Filter out undefined array items (replace with null, matching JSON.stringify)
+    return '[' + obj.map(item => {
+      const val = canonicalizeJson(item);
+      return val === undefined ? 'null' : val;
+    }).join(',') + ']';
   }
   const keys = Object.keys(obj).sort();
-  const pairs = keys.map(key => `"${key}":${canonicalizeJson(obj[key])}`);
+  // Skip keys with undefined values (matching JSON.stringify behavior)
+  const pairs = keys
+    .filter(key => obj[key] !== undefined)
+    .map(key => `"${key}":${canonicalizeJson(obj[key])}`);
   return '{' + pairs.join(',') + '}';
 }
 

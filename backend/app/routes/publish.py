@@ -102,6 +102,7 @@ def publish_exam(payload: PublishExamRequest, user=Depends(get_current_user)):
             "iv": payload.iv,
             "tag": base64.b64encode(gcm_tag).decode(),
             "signature": payload.signature,
+            "aes_key_b64": payload.aes_key,  # Store for late key-wrapping
             "created_at": datetime.utcnow().isoformat()
         }).execute()
     except Exception as e:

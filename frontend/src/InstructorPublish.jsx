@@ -107,7 +107,7 @@ export default function InstructorPublish() {
         exam_id: selectedExamId,
         title: selectedExam?.title || "Exam",
         questions: mcqs.map((q) => ({
-          question_id: q.question_id,
+          question_id: q.question_id || q.id,
           question_text: q.question_text,
           option_a: q.option_a,
           option_b: q.option_b,
