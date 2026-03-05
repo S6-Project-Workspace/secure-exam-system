@@ -4,8 +4,11 @@ import { useTheme } from "../../../context/ThemeContext";
 /**
  * PerformanceGraph
  * Props:
- *   results  – array from /results/me  ({ exam_id, marks, evaluated_at, ... })
+ *   results  – array from /results/me  ({ exam_id, marks, total_questions, evaluated_at, ... })
  *   exams    – array from /exams/me    ({ exam_id, title, ... })
+ *
+ * Percentage = (marks / total_questions) * 100
+ * Falls back to treating marks directly as % only when total_questions is unavailable.
  */
 export default function PerformanceGraph({ results = [], exams = [] }) {
     const { isDarkMode } = useTheme();
@@ -17,7 +20,7 @@ export default function PerformanceGraph({ results = [], exams = [] }) {
         return map;
     }, [exams]);
 
-    // Sort results by evaluated_at ascending so the graph reads left→right chronologically
+    // Sort results by evaluated_at ascending (left → right on graph = oldest → newest)
     const sorted = useMemo(() => {
         return [...results]
             .filter(r => r.marks != null)
@@ -28,8 +31,16 @@ export default function PerformanceGraph({ results = [], exams = [] }) {
             });
     }, [results]);
 
-    // Derive stats
-    const percentages = sorted.map(r => Math.min(100, Math.max(0, Number(r.marks))));
+    // Compute real percentages: (marks / total_questions) * 100
+    // If total_questions is missing/zero, fall back to marks value clamped to [0,100]
+    const percentages = sorted.map(r => {
+        const tq = r.total_questions;
+        if (tq && tq > 0) {
+            return Math.min(100, Math.round((Number(r.marks) / tq) * 100));
+        }
+        return Math.min(100, Math.max(0, Math.round(Number(r.marks))));
+    });
+
     const avg = percentages.length
         ? Math.round(percentages.reduce((a, b) => a + b, 0) / percentages.length)
         : null;
@@ -48,7 +59,6 @@ export default function PerformanceGraph({ results = [], exams = [] }) {
     const points = useMemo(() => {
         if (percentages.length === 0) return [];
         if (percentages.length === 1) {
-            // Single point — center it
             return [{ x: W / 2, y: PAD_Y + chartH * (1 - percentages[0] / 100) }];
         }
         return percentages.map((p, i) => ({
@@ -57,7 +67,6 @@ export default function PerformanceGraph({ results = [], exams = [] }) {
         }));
     }, [percentages]);
 
-    // Build smooth polyline path
     const buildPath = (pts) => {
         if (pts.length === 0) return "";
         if (pts.length === 1) return `M ${pts[0].x} ${pts[0].y}`;
@@ -70,7 +79,6 @@ export default function PerformanceGraph({ results = [], exams = [] }) {
     };
 
     const linePath = buildPath(points);
-    // Area fill: close the path to the bottom
     const areaPath = points.length > 0
         ? `${linePath} L ${points[points.length - 1].x} ${H} L ${points[0].x} ${H} Z`
         : "";
@@ -90,198 +98,204 @@ export default function PerformanceGraph({ results = [], exams = [] }) {
     const headingText = isDarkMode ? "text-white" : "text-slate-900";
     const subText = isDarkMode ? "text-slate-300" : "text-slate-700";
 
+    // ── Empty state ──────────────────────────────────────────────────────────
     if (results.length === 0) {
         return (
-            <section className={`rounded-2xl border p-6 ${cardBg}`}>
-                <div className="flex items-center gap-3 mb-2">
-                    <div className={`p-2 rounded-xl ${isDarkMode ? "bg-indigo-500/10" : "bg-indigo-50"}`}>
-                        <span className="material-symbols-outlined text-indigo-500 text-xl">show_chart</span>
+            <div className="w-full lg:w-1/2">
+                <section className={`rounded-2xl border p-6 ${cardBg}`}>
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className={`p-2 rounded-xl ${isDarkMode ? "bg-indigo-500/10" : "bg-indigo-50"}`}>
+                            <span className="material-symbols-outlined text-indigo-500 text-xl">show_chart</span>
+                        </div>
+                        <div>
+                            <h3 className={`font-bold text-base ${headingText}`}>Performance Graph</h3>
+                            <p className={`text-xs ${mutedText}`}>Score % across all exams</p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 className={`font-bold text-base ${headingText}`}>Performance Graph</h3>
-                        <p className={`text-xs ${mutedText}`}>Marks % across all exams</p>
+                    <div className={`flex flex-col items-center justify-center py-10 gap-2 ${mutedText}`}>
+                        <span className="material-symbols-outlined text-4xl opacity-30">bar_chart</span>
+                        <p className="text-sm">No results published yet.</p>
+                        <p className="text-xs opacity-70">Your graph will appear once your instructor publishes your results.</p>
                     </div>
-                </div>
-                <div className={`flex flex-col items-center justify-center py-10 gap-2 ${mutedText}`}>
-                    <span className="material-symbols-outlined text-4xl opacity-30">bar_chart</span>
-                    <p className="text-sm">No results published yet.</p>
-                    <p className="text-xs opacity-70">Your graph will appear once your instructor publishes your results.</p>
-                </div>
-            </section>
+                </section>
+            </div>
         );
     }
 
+    // ── Main graph ──────────────────────────────────────────────────────────
     return (
-        <section className={`rounded-2xl border p-6 ${cardBg}`}>
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-                <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-xl ${isDarkMode ? "bg-indigo-500/10" : "bg-indigo-50"}`}>
-                        <span className="material-symbols-outlined text-indigo-500 text-xl">show_chart</span>
+        // Capped at 50% width on large screens, full width on smaller
+        <div className="w-full lg:w-1/2">
+            <section className={`rounded-2xl border p-6 ${cardBg}`}>
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+                    <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-xl ${isDarkMode ? "bg-indigo-500/10" : "bg-indigo-50"}`}>
+                            <span className="material-symbols-outlined text-indigo-500 text-xl">show_chart</span>
+                        </div>
+                        <div>
+                            <h3 className={`font-bold text-base ${headingText}`}>Performance Graph</h3>
+                            <p className={`text-xs ${mutedText}`}>
+                                Score % · {sorted.length} exam{sorted.length !== 1 ? "s" : ""}
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 className={`font-bold text-base ${headingText}`}>Performance Graph</h3>
-                        <p className={`text-xs ${mutedText}`}>Marks % across {sorted.length} exam{sorted.length !== 1 ? "s" : ""}</p>
+
+                    {/* Stat pills */}
+                    <div className="flex flex-wrap gap-2 text-xs font-semibold">
+                        {avg !== null && (
+                            <span className={`px-3 py-1 rounded-full ${isDarkMode ? "bg-slate-700 text-slate-200" : "bg-slate-100 text-slate-700"}`}>
+                                Avg <span style={{ color: lineColor }}>{avg}%</span>
+                            </span>
+                        )}
+                        {best !== null && (
+                            <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500">
+                                Best {best}%
+                            </span>
+                        )}
+                        {trend !== null && (
+                            <span className={`px-3 py-1 rounded-full flex items-center gap-0.5 ${trend >= 0 ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-400"}`}>
+                                <span className="material-symbols-outlined text-xs">{trend >= 0 ? "trending_up" : "trending_down"}</span>
+                                {trend >= 0 ? "+" : ""}{trend}%
+                            </span>
+                        )}
                     </div>
                 </div>
 
-                {/* Stat pills */}
-                <div className="flex flex-wrap gap-2 text-xs font-semibold">
-                    {avg !== null && (
-                        <span className={`px-3 py-1 rounded-full ${isDarkMode ? "bg-slate-700 text-slate-200" : "bg-slate-100 text-slate-700"}`}>
-                            Avg <span style={{ color: lineColor }}>{avg}%</span>
-                        </span>
-                    )}
-                    {best !== null && (
-                        <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500">
-                            Best {best}%
-                        </span>
-                    )}
-                    {trend !== null && (
-                        <span className={`px-3 py-1 rounded-full flex items-center gap-0.5 ${trend >= 0 ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-400"}`}>
-                            <span className="material-symbols-outlined text-xs">{trend >= 0 ? "trending_up" : "trending_down"}</span>
-                            {trend >= 0 ? "+" : ""}{trend}%
-                        </span>
-                    )}
-                </div>
-            </div>
+                {/* SVG Chart */}
+                <div className="relative w-full">
+                    <svg
+                        viewBox={`0 0 ${W} ${H}`}
+                        preserveAspectRatio="none"
+                        className="w-full"
+                        style={{ height: "130px" }}
+                        aria-label="Performance line chart"
+                    >
+                        <defs>
+                            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor={lineColor} stopOpacity="0.25" />
+                                <stop offset="100%" stopColor={lineColor} stopOpacity="0" />
+                            </linearGradient>
+                        </defs>
 
-            {/* SVG Chart */}
-            <div className="relative w-full overflow-x-auto">
-                <svg
-                    viewBox={`0 0 ${W} ${H}`}
-                    preserveAspectRatio="none"
-                    className="w-full"
-                    style={{ height: "130px" }}
-                    aria-label="Performance line chart"
-                >
-                    <defs>
-                        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor={lineColor} stopOpacity="0.25" />
-                            <stop offset="100%" stopColor={lineColor} stopOpacity="0" />
-                        </linearGradient>
-                    </defs>
+                        {/* Horizontal guide lines at 25 / 50 / 75 / 100% */}
+                        {[25, 50, 75, 100].map(pct => {
+                            const y = PAD_Y + chartH * (1 - pct / 100);
+                            return (
+                                <g key={pct}>
+                                    <line
+                                        x1={PAD_X} y1={y} x2={W - PAD_X} y2={y}
+                                        stroke={isDarkMode ? "#334155" : "#e2e8f0"}
+                                        strokeWidth="1"
+                                        strokeDasharray="4 4"
+                                    />
+                                    <text
+                                        x={PAD_X} y={y - 3}
+                                        fontSize="8"
+                                        fill={isDarkMode ? "#475569" : "#94a3b8"}
+                                        fontFamily="system-ui, sans-serif"
+                                    >
+                                        {pct}%
+                                    </text>
+                                </g>
+                            );
+                        })}
 
-                    {/* Horizontal guide lines at 25%, 50%, 75%, 100% */}
-                    {[25, 50, 75, 100].map(pct => {
-                        const y = PAD_Y + chartH * (1 - pct / 100);
-                        return (
-                            <g key={pct}>
-                                <line
-                                    x1={PAD_X} y1={y} x2={W - PAD_X} y2={y}
-                                    stroke={isDarkMode ? "#334155" : "#e2e8f0"}
-                                    strokeWidth="1"
-                                    strokeDasharray="4 4"
-                                />
-                                <text
-                                    x={PAD_X}
-                                    y={y - 3}
-                                    fontSize="8"
-                                    fill={isDarkMode ? "#475569" : "#94a3b8"}
-                                    fontFamily="system-ui, sans-serif"
-                                >
-                                    {pct}%
-                                </text>
-                            </g>
-                        );
-                    })}
+                        {/* Area fill */}
+                        {areaPath && <path d={areaPath} fill={`url(#${gradientId})`} />}
 
-                    {/* Area fill */}
-                    {areaPath && (
-                        <path d={areaPath} fill={`url(#${gradientId})`} />
-                    )}
+                        {/* Line */}
+                        {linePath && (
+                            <path
+                                d={linePath}
+                                fill="none"
+                                stroke={lineColor}
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            />
+                        )}
 
-                    {/* Line */}
-                    {linePath && (
-                        <path
-                            d={linePath}
-                            fill="none"
-                            stroke={lineColor}
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        />
-                    )}
-
-                    {/* Data points */}
-                    {points.map((pt, i) => (
-                        <g key={i}>
+                        {/* Data-point circles */}
+                        {points.map((pt, i) => (
                             <circle
-                                cx={pt.x}
-                                cy={pt.y}
-                                r="5"
+                                key={i}
+                                cx={pt.x} cy={pt.y} r="5"
                                 fill={isDarkMode ? "#1a2332" : "#fff"}
                                 stroke={lineColor}
                                 strokeWidth="2"
                             />
-                        </g>
+                        ))}
+                    </svg>
+                </div>
+
+                {/* X-axis labels: exam name + computed % */}
+                <div className="flex justify-between mt-2 px-1">
+                    {sorted.map((r, i) => (
+                        <div key={i} className="flex flex-col items-center" style={{ flex: "1", minWidth: 0 }}>
+                            <span
+                                className={`text-[10px] truncate max-w-[56px] text-center font-medium ${mutedText}`}
+                                title={examTitleMap[r.exam_id] || r.exam_id}
+                            >
+                                {examTitleMap[r.exam_id]
+                                    ? examTitleMap[r.exam_id].length > 8
+                                        ? examTitleMap[r.exam_id].slice(0, 8) + "…"
+                                        : examTitleMap[r.exam_id]
+                                    : `E${i + 1}`}
+                            </span>
+                            <span
+                                className="text-[11px] font-bold mt-0.5"
+                                style={{ color: gradeColor(percentages[i]) }}
+                            >
+                                {percentages[i]}%
+                            </span>
+                        </div>
                     ))}
-                </svg>
-            </div>
+                </div>
 
-            {/* X-axis labels */}
-            <div className="flex justify-between mt-2 px-1">
-                {sorted.map((r, i) => (
-                    <div key={i} className="flex flex-col items-center" style={{ flex: "1", minWidth: 0 }}>
-                        <span
-                            className={`text-[10px] truncate max-w-[56px] text-center font-medium ${mutedText}`}
-                            title={examTitleMap[r.exam_id] || r.exam_id}
-                        >
-                            {examTitleMap[r.exam_id]
-                                ? examTitleMap[r.exam_id].length > 8
-                                    ? examTitleMap[r.exam_id].slice(0, 8) + "…"
-                                    : examTitleMap[r.exam_id]
-                                : `E${i + 1}`}
-                        </span>
-                        <span
-                            className="text-[11px] font-bold mt-0.5"
-                            style={{ color: gradeColor(percentages[i]) }}
-                        >
-                            {percentages[i]}%
-                        </span>
-                    </div>
-                ))}
-            </div>
-
-            {/* Per-exam row list (if more than 1 result) */}
-            {sorted.length > 1 && (
-                <div className={`mt-5 divide-y ${isDarkMode ? "divide-slate-700/50" : "divide-slate-100"}`}>
-                    {sorted.map((r, i) => {
-                        const pct = percentages[i];
-                        const title = examTitleMap[r.exam_id] || `Exam ${i + 1}`;
-                        const dateStr = r.evaluated_at
-                            ? new Date(r.evaluated_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
-                            : "—";
-                        return (
-                            <div key={i} className="flex items-center gap-3 py-2.5">
-                                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                                    style={{ backgroundColor: gradeColor(pct) + "22", color: gradeColor(pct) }}>
-                                    {i + 1}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className={`text-sm font-semibold truncate ${subText}`}>{title}</p>
-                                    <p className={`text-xs ${mutedText}`}>{dateStr}</p>
-                                </div>
-                                <div className="text-right flex-shrink-0">
-                                    <span
-                                        className="font-bold text-sm"
-                                        style={{ color: gradeColor(pct) }}
+                {/* Per-exam breakdown list */}
+                {sorted.length > 0 && (
+                    <div className={`mt-5 divide-y ${isDarkMode ? "divide-slate-700/50" : "divide-slate-100"}`}>
+                        {sorted.map((r, i) => {
+                            const pct = percentages[i];
+                            const title = examTitleMap[r.exam_id] || `Exam ${i + 1}`;
+                            const dateStr = r.evaluated_at
+                                ? new Date(r.evaluated_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+                                : "—";
+                            const tq = r.total_questions;
+                            const detail = tq ? `${r.marks} / ${tq}` : `${r.marks} marks`;
+                            return (
+                                <div key={i} className="flex items-center gap-3 py-2.5">
+                                    <div
+                                        className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                                        style={{ backgroundColor: gradeColor(pct) + "22", color: gradeColor(pct) }}
                                     >
-                                        {pct}%
-                                    </span>
-                                    <div className="w-20 h-1.5 mt-1 rounded-full overflow-hidden"
-                                        style={{ backgroundColor: isDarkMode ? "#334155" : "#e2e8f0" }}>
+                                        {i + 1}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className={`text-sm font-semibold truncate ${subText}`}>{title}</p>
+                                        <p className={`text-xs ${mutedText}`}>{detail} · {dateStr}</p>
+                                    </div>
+                                    <div className="text-right flex-shrink-0">
+                                        <span className="font-bold text-sm" style={{ color: gradeColor(pct) }}>
+                                            {pct}%
+                                        </span>
                                         <div
-                                            className="h-full rounded-full transition-all duration-700"
-                                            style={{ width: `${pct}%`, backgroundColor: gradeColor(pct) }}
-                                        />
+                                            className="w-20 h-1.5 mt-1 rounded-full overflow-hidden"
+                                            style={{ backgroundColor: isDarkMode ? "#334155" : "#e2e8f0" }}
+                                        >
+                                            <div
+                                                className="h-full rounded-full transition-all duration-700"
+                                                style={{ width: `${pct}%`, backgroundColor: gradeColor(pct) }}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
-        </section>
+                            );
+                        })}
+                    </div>
+                )}
+            </section>
+        </div>
     );
 }

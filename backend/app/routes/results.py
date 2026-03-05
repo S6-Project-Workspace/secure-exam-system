@@ -125,7 +125,8 @@ def publish_result(payload: PublishResultRequest, user=Depends(get_current_user)
 def get_my_all_results(user=Depends(get_current_user)):
     """
     Return all results for the authenticated student.
-    Useful for dashboard analytics.
+    Each result is enriched with total_questions so the frontend
+    can compute percentage as (marks / total_questions) * 100.
     """
     if user.get("role") != "student":
         raise HTTPException(status_code=403, detail="Only students can fetch their results")
@@ -133,10 +134,22 @@ def get_my_all_results(user=Depends(get_current_user)):
     student_id = user.get("sub")
     try:
         rec = supabase.table("results").select("*").eq("student_id", student_id).execute()
-        return {"results": rec.data or []}
+        results = rec.data or []
+
+        # Enrich each result with total_questions
+        for r in results:
+            exam_id = r.get("exam_id")
+            try:
+                q_rec = supabase.table("questions").select("question_id").eq("exam_id", exam_id).execute()
+                r["total_questions"] = len(q_rec.data) if q_rec.data else None
+            except Exception:
+                r["total_questions"] = None
+
+        return {"results": results}
     except Exception as e:
         # Table might not exist yet
         return {"results": []}
+
 
 
 @router.get("/{exam_id}/{student_id}")
