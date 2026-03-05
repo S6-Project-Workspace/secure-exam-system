@@ -140,9 +140,12 @@ def get_my_all_results(user=Depends(get_current_user)):
         for r in results:
             exam_id = r.get("exam_id")
             try:
-                q_rec = supabase.table("questions").select("question_id").eq("exam_id", exam_id).execute()
-                r["total_questions"] = len(q_rec.data) if q_rec.data else None
-            except Exception:
+                # Select exam_id (guaranteed to exist) just to count rows
+                q_rec = supabase.table("questions").select("exam_id").eq("exam_id", exam_id).execute()
+                count = len(q_rec.data) if q_rec.data else 0
+                r["total_questions"] = count if count > 0 else None
+            except Exception as qe:
+                print(f"[RESULTS/ME] question count error for {exam_id}: {qe}")
                 r["total_questions"] = None
 
         return {"results": results}

@@ -140,12 +140,16 @@ def get_wrapped_exam_key(exam_id: str, user=Depends(get_current_user)):
 @router.get("/me")
 def get_my_exams(user=Depends(get_current_user)):
     """
-    Return all available exams for the student.
-    In this demo, we return all exams from the exams table.
+    Return all available exams for the student, enriched with question_count.
     """
-    # For now, just return all exams.
-    # Students can see title, description, created_at etc.
     res = supabase.table("exams").select("*").order("created_at", desc=True).execute()
-    return {"exams": res.data}
+    exams = res.data or []
+    for exam in exams:
+        try:
+            q = supabase.table("questions").select("exam_id").eq("exam_id", exam["exam_id"]).execute()
+            exam["question_count"] = len(q.data) if q.data else 0
+        except Exception:
+            exam["question_count"] = 0
+    return {"exams": exams}
 
 
