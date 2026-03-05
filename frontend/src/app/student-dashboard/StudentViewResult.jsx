@@ -154,7 +154,7 @@ export default function StudentViewResult() {
                         <>
                             <span className="material-symbols-outlined text-emerald-500 text-3xl">verified</span>
                             <div>
-                                <p className={`font-semibold ${isDarkMode ? 'text-emerald-300' : 'text-emerald-800'}`}>✅ Signature Verified</p>
+                                <p className={`font-semibold ${isDarkMode ? 'text-emerald-300' : 'text-emerald-800'}`}>Signature Verified</p>
                                 <p className={`text-sm ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>This result is authentic and has not been tampered with.</p>
                             </div>
                         </>
