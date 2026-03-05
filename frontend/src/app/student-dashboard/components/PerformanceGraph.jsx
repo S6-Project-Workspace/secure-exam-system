@@ -22,10 +22,27 @@ export default function PerformanceGraph({ results = [], exams = [] }) {
         return map;
     }, [exams]);
 
-    // Sort results oldest → newest
+    // Sort results oldest → newest AND deduplicate by exam_id (keep latest)
     const sorted = useMemo(() => {
-        return [...results]
+        // First, group by exam_id and keep the most recent result
+        const latestResults = new Map();
+        [...results]
             .filter(r => r.marks != null)
+            .forEach(r => {
+                const existing = latestResults.get(r.exam_id);
+                if (!existing) {
+                    latestResults.set(r.exam_id, r);
+                } else {
+                    const existingDate = existing.evaluated_at ? new Date(existing.evaluated_at) : 0;
+                    const newDate = r.evaluated_at ? new Date(r.evaluated_at) : 0;
+                    if (newDate > existingDate) {
+                        latestResults.set(r.exam_id, r);
+                    }
+                }
+            });
+
+        // Then, sort the unique results chronologically (oldest to newest for the graph left-to-right)
+        return Array.from(latestResults.values())
             .sort((a, b) => {
                 const da = a.evaluated_at ? new Date(a.evaluated_at) : 0;
                 const db = b.evaluated_at ? new Date(b.evaluated_at) : 0;
