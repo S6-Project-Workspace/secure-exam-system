@@ -50,14 +50,21 @@ def get_instructor_exams(user=Depends(get_current_user)):
         # Fetch exams for this instructor
         exams = supabase.table("exams").select("*").eq("instructor_id", instructor_id).order("created_at", desc=True).execute()
         
-        # For each exam, get question count
+        # For each exam, get question count and check if published
         exam_list = []
         for exam in exams.data:
             try:
-                q_count = supabase.table("questions").select("question_id", count="exact").eq("exam_id", exam["exam_id"]).execute()
-                exam["question_count"] = q_count.count if q_count.count else 0
-            except Exception:
+                q_result = supabase.table("questions").select("*").eq("exam_id", exam["exam_id"]).execute()
+                exam["question_count"] = len(q_result.data) if q_result.data else 0
+            except Exception as qe:
+                print(f"[question_count error] exam {exam.get('exam_id')}: {qe}")
                 exam["question_count"] = 0
+            try:
+                pkg_result = supabase.table("exam_packages").select("package_id").eq("exam_id", exam["exam_id"]).execute()
+                exam["is_published"] = len(pkg_result.data) > 0 if pkg_result.data else False
+            except Exception as pe:
+                print(f"[is_published error] exam {exam.get('exam_id')}: {pe}")
+                exam["is_published"] = False
             exam_list.append(exam)
         
         return {"exams": exam_list}

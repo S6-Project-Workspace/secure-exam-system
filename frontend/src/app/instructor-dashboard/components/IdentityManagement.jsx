@@ -4,13 +4,7 @@ import { Link } from "react-router-dom";
 export default function IdentityManagement({ keyStatus }) {
     return (
         <section className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
-            <div className="bg-gradient-to-r from-indigo-700 to-blue-900 px-6 py-4 flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-white/90">key</span>
-                    <h3 className="text-white font-bold text-lg">Cryptographic Identity Management</h3>
-                </div>
-                <span className="bg-white/20 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full border border-white/30">RSA-2048</span>
-            </div>
+           
 
             <div className="p-6 md:p-8">
                 <div className="flex flex-col md:flex-row gap-6 items-center">

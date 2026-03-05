@@ -2,38 +2,22 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "../../../context/ThemeContext";
 
-export default function DashboardHeaderNew({ name, id, onLogout }) {
+export default function InstructorHeader({ name, onLogout }) {
     const { isDarkMode, toggleTheme } = useTheme();
     const location = useLocation();
 
-    // Auto-detect: show Back to Dashboard on any page that is NOT the dashboard
-    const isDashboardPage =
-        location.pathname === "/student" || location.pathname === "/student/dashboard";
+    // Auto-detect: show Back to Dashboard on any page other than the dashboard
+    const isDashboardPage = location.pathname === "/instructor/dashboard";
     const showBackButton = !isDashboardPage;
 
     const navItems = [
-        { label: "Dashboard", path: "/student/dashboard", section: "dashboard" },
-        { label: "My Exams", path: "#exams", section: "exams" },
-        { label: "Results", path: "#results", section: "results" },
-        { label: "Settings", path: "#settings", section: "settings" }
+        { label: "Dashboard", path: "/instructor/dashboard" },
+        { label: "Create Exam", path: "/instructor/exams/create" },
+        { label: "Publish", path: "/instructor/publish" },
+        { label: "Evaluate", path: "/instructor/evaluate" },
     ];
 
-    const handleNavClick = (e, item) => {
-        if (item.path.startsWith("#")) {
-            e.preventDefault();
-            const section = document.getElementById(item.section);
-            if (section) {
-                section.scrollIntoView({ behavior: "smooth" });
-            }
-        }
-    };
-
-    const isActive = (item, index) => {
-        if (location.pathname === "/student" || location.pathname === "/student/dashboard") {
-            return index === 0;
-        }
-        return false;
-    };
+    const isActive = (item) => location.pathname === item.path;
 
     return (
         <header className={`${isDarkMode ? 'bg-[#0f172a] text-white' : 'bg-white text-slate-900 border-b border-slate-200'} shadow-lg transition-colors duration-300`}>
@@ -51,22 +35,21 @@ export default function DashboardHeaderNew({ name, id, onLogout }) {
                     <nav className="hidden md:flex items-center gap-1">
                         {showBackButton ? (
                             <Link
-                                to="/student/dashboard"
+                                to="/instructor/dashboard"
                                 className={`px-4 py-2 rounded-lg text-sm font-medium ${isDarkMode ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'} transition-colors flex items-center gap-2`}
                             >
                                 <span className="material-symbols-outlined text-base">arrow_back</span>
                                 Back to Dashboard
                             </Link>
                         ) : (
-                            navItems.map((item, index) => (
+                            navItems.map((item) => (
                                 <Link
                                     key={item.label}
                                     to={item.path}
-                                    onClick={(e) => handleNavClick(e, item)}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                        isActive(item, index)
+                                        isActive(item)
                                             ? "bg-blue-600/20 text-blue-400"
-                                            : isDarkMode 
+                                            : isDarkMode
                                                 ? "text-slate-400 hover:text-white hover:bg-white/5"
                                                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                                     }`}
@@ -77,7 +60,7 @@ export default function DashboardHeaderNew({ name, id, onLogout }) {
                         )}
                     </nav>
 
-                    {/* Right Side - User Info */}
+                    {/* Right Side */}
                     <div className="flex items-center gap-4">
                         {/* Theme Toggle */}
                         <button
@@ -93,21 +76,16 @@ export default function DashboardHeaderNew({ name, id, onLogout }) {
                             </span>
                         </button>
 
-                        
-
-                        {/* User Info */}
-                        <div className="flex items-center gap-3">
-                            
-                            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
-                                {name?.charAt(0) || "S"}
-                            </div>
+                        {/* User Avatar */}
+                        <div className="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
+                            {name?.charAt(0) || "I"}
                         </div>
 
-                        {/* Logout Button */}
+                        {/* Logout */}
                         {onLogout && (
-                            <button 
-                                onClick={onLogout} 
-                                className={`${isDarkMode ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'} transition-colors ml-2`}
+                            <button
+                                onClick={onLogout}
+                                className={`${isDarkMode ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'} transition-colors`}
                                 aria-label="Logout"
                             >
                                 <span className="material-symbols-outlined">logout</span>

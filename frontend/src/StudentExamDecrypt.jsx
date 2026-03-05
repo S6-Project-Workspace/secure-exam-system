@@ -19,6 +19,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { API_BASE_URL } from "./config";
 import { getToken, authFetch } from "./app/auth/authHelpers";
 import { useTheme } from "./context/ThemeContext";
+import DashboardHeaderNew from "./app/student-dashboard/components/DashboardHeaderNew";
 import {
   base64ToArrayBuffer,
   bufferToBase64,
@@ -107,6 +108,18 @@ export default function StudentExamDecrypt() {
     setMcqs(null);
 
     try {
+      // 0. Check if already submitted — block re-entry
+      const subCheck = await authFetch(`${API_BASE_URL}/submissions/me`);
+      if (subCheck.ok) {
+        const subData = await subCheck.json();
+        const alreadySubmitted = (subData.submissions || []).some(s => s.exam_id === examId);
+        if (alreadySubmitted) {
+          setError("already_submitted");
+          setDecryptionStatus("error");
+          return;
+        }
+      }
+
       // 1. Fetch encrypted package
       const pkgRes = await authFetch(`${API_BASE_URL}/exams/${examId}/package`);
       if (!pkgRes.ok) {
@@ -305,7 +318,7 @@ export default function StudentExamDecrypt() {
 
       if (!response.ok) throw new Error(data.detail || "Submission failed");
 
-      setSubmitStatus("✓ Answers submitted successfully!");
+      setSubmitStatus(" Answers submitted successfully!");
       setSubmitSuccess(true);
 
       // Auto-redirect to dashboard after 2 seconds
@@ -327,35 +340,22 @@ export default function StudentExamDecrypt() {
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-[#0f172a]' : 'bg-slate-50'} font-body transition-colors duration-300`}>
-      {/* Exam Header - Only show when exam is loaded */}
+      {/* Standard App Header */}
+      <DashboardHeaderNew />
+
+      {/* Exam Info Bar - Only show when exam is loaded */}
       {mcqs && !showSubmitModal && (
         <header className={`${isDarkMode ? 'bg-[#1a2332] border-slate-700' : 'bg-white border-slate-200'} border-b px-6 py-4 sticky top-0 z-50 transition-colors duration-300`}>
           <div className="max-w-5xl mx-auto flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-semibold rounded">MID-TERM</span>
-                <span className={`px-2 py-0.5 ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'} text-xs font-semibold rounded`}>
-                  {examId?.slice(0, 8).toUpperCase()}
-                </span>
+            
               </div>
               <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{examData?.title || mcqs?.title || "Exam"}</h1>
-              <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Total Marks: 100</p>
             </div>
 
             <div className="flex items-center gap-4">
-              {/* Theme Toggle */}
-              <button
-                onClick={toggleTheme}
-                className={`relative flex items-center justify-center w-9 h-9 rounded-full ${isDarkMode ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-100 hover:bg-slate-200'} transition-all duration-300`}
-                aria-label="Toggle theme"
-              >
-                <span className={`material-symbols-outlined text-lg absolute transition-all duration-300 ${isDarkMode ? 'opacity-0 rotate-90 scale-0' : 'opacity-100 rotate-0 scale-100 text-amber-500'}`}>
-                  light_mode
-                </span>
-                <span className={`material-symbols-outlined text-lg absolute transition-all duration-300 ${isDarkMode ? 'opacity-100 rotate-0 scale-100 text-blue-400' : 'opacity-0 -rotate-90 scale-0'}`}>
-                  dark_mode
-                </span>
-              </button>
+              
 
               {time && (
                 <div className="flex items-center gap-1 text-center">
@@ -410,14 +410,30 @@ export default function StudentExamDecrypt() {
         {/* Error State */}
         {decryptionStatus === "error" && (
           <div className="max-w-2xl mx-auto">
-            <div className={`${isDarkMode ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'} border rounded-2xl p-8 text-center`}>
-              <span className="material-symbols-outlined text-5xl text-red-500 mb-4">error</span>
-              <h2 className={`text-xl font-bold ${isDarkMode ? 'text-red-400' : 'text-red-800'} mb-2`}>Decryption Failed</h2>
-              <p className={`${isDarkMode ? 'text-red-400' : 'text-red-600'} mb-6`}>{error}</p>
-              <Link to="/student/dashboard" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                Return to Dashboard
-              </Link>
-            </div>
+            {error === "already_submitted" ? (
+              <div className={`${isDarkMode ? 'bg-amber-900/20 border-amber-700' : 'bg-amber-50 border-amber-300'} border rounded-2xl p-10 text-center`}>
+                <span className="material-symbols-outlined text-6xl text-amber-500 mb-4 block">task_alt</span>
+                <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-amber-300' : 'text-amber-800'} mb-2`}>Already Submitted</h2>
+                <p className={`${isDarkMode ? 'text-amber-400' : 'text-amber-700'} mb-2`}>
+                  You have already submitted this exam. Only one submission is allowed.
+                </p>
+                <p className={`text-sm ${isDarkMode ? 'text-amber-500' : 'text-amber-600'} mb-8`}>
+                  Your answers have been recorded. Check the <strong>Completed Exams & Results</strong> section for your score once results are published.
+                </p>
+                <Link to="/student/dashboard" className="px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors">
+                  Go to Dashboard
+                </Link>
+              </div>
+            ) : (
+              <div className={`${isDarkMode ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'} border rounded-2xl p-8 text-center`}>
+                <span className="material-symbols-outlined text-5xl text-red-500 mb-4 block">error</span>
+                <h2 className={`text-xl font-bold ${isDarkMode ? 'text-red-400' : 'text-red-800'} mb-2`}>Decryption Failed</h2>
+                <p className={`${isDarkMode ? 'text-red-400' : 'text-red-600'} mb-6`}>{error}</p>
+                <Link to="/student/dashboard" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                  Return to Dashboard
+                </Link>
+              </div>
+            )}
           </div>
         )}
 
@@ -552,32 +568,7 @@ export default function StudentExamDecrypt() {
         {decryptionStatus === "success" && mcqs && !showSubmitModal && (
           <>
             {/* Security Status Bar */}
-            <div className={`${isDarkMode ? 'bg-[#1a2332] border-slate-700' : 'bg-white border-slate-200'} rounded-xl border p-4 mb-6 flex flex-wrap items-center justify-between gap-4`}>
-              <div>
-                <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'} mb-1`}>Security Status</p>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  <span className="text-sm text-emerald-600">Exam decrypted successfully</span>
-                  <span className="text-emerald-600 font-bold">100%</span>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className={`flex items-center gap-2 px-3 py-2 ${isDarkMode ? 'bg-blue-500/10' : 'bg-blue-50'} rounded-lg`}>
-                  <span className="material-symbols-outlined text-blue-600">lock</span>
-                  <div>
-                    <p className={`text-xs font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>AES-256 Encrypted</p>
-                    <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>End-to-end protection</p>
-                  </div>
-                </div>
-                <div className={`flex items-center gap-2 px-3 py-2 ${isDarkMode ? 'bg-emerald-500/10' : 'bg-emerald-50'} rounded-lg`}>
-                  <span className="material-symbols-outlined text-emerald-600">verified</span>
-                  <div>
-                    <p className={`text-xs font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Signature Verified</p>
-                    <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Instructor Key: {examData?.instructor_id?.slice(0, 8)}...</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            
 
             {/* Questions Section */}
             <div className={`${isDarkMode ? 'bg-[#1a2332] border-slate-700' : 'bg-white border-slate-200'} rounded-2xl border overflow-hidden`}>

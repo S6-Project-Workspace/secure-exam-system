@@ -2,11 +2,11 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useTheme } from "../../../context/ThemeContext";
 
-export default function PendingExamsCard({ exams = [], results = [] }) {
+export default function PendingExamsCard({ exams = [], results = [], submissions = [] }) {
     const { isDarkMode } = useTheme();
-    // Filter pending exams (exams that don't have results yet)
-    const completedExamIds = new Set(results.map(r => r.exam_id));
-    const pendingExams = exams.filter(exam => !completedExamIds.has(exam.exam_id));
+    // Filter pending exams — exclude exams the student has already submitted
+    const submittedExamIds = new Set(submissions.map(s => s.exam_id));
+    const pendingExams = exams.filter(exam => !submittedExamIds.has(exam.exam_id));
 
     return (
         <div className={`${isDarkMode ? 'bg-[#1a2332] border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'} rounded-xl p-6 border`}>
@@ -22,7 +22,7 @@ export default function PendingExamsCard({ exams = [], results = [] }) {
 
             <div className="space-y-3">
                 {pendingExams.length > 0 ? (
-                    pendingExams.slice(0, 5).map((exam, index) => (
+                    pendingExams.slice(0, 3).map((exam, index) => (
                         <div key={exam.exam_id} className={`flex items-center justify-between p-3 ${isDarkMode ? 'bg-slate-800/50 hover:bg-slate-800' : 'bg-slate-50 hover:bg-slate-100'} rounded-lg transition-colors`}>
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center">

@@ -13,6 +13,27 @@ from cryptography.hazmat.primitives.serialization import load_pem_public_key
 router = APIRouter(prefix="/submissions", tags=["Submissions"])
 
 
+@router.get("/me")
+def get_my_submissions(user=Depends(get_current_user)):
+    """Return a list of submissions the authenticated student has made."""
+    if user.get("role") != "student":
+        raise HTTPException(status_code=403, detail="Only students can fetch their submissions")
+    student_id = user.get("sub")
+    try:
+        rec = supabase.table("submissions").select("*").eq("student_id", student_id).execute()
+        # Normalise each row to guarantee exam_id and created_at fields
+        rows = []
+        for row in (rec.data or []):
+            rows.append({
+                "exam_id": row.get("exam_id"),
+                "created_at": row.get("created_at") or row.get("submitted_at") or None,
+            })
+        return {"submissions": rows}
+    except Exception as e:
+        print(f"[SUBMISSIONS/ME] ERROR fetching submissions for {student_id}: {e}")
+        return {"submissions": []}
+
+
 class SubmissionPayload(BaseModel):
     exam_id: str
     encrypted_answers: str  # base64
@@ -31,6 +52,11 @@ def submit_answers(payload: SubmissionPayload, user=Depends(get_current_user)):
 
         student_id = user.get("sub")
         print(f"[SUBMIT] Student {student_id} submitting for exam {payload.exam_id}")
+
+        # Reject duplicate submissions
+        existing = supabase.table("submissions").select("exam_id").eq("student_id", student_id).eq("exam_id", payload.exam_id).execute()
+        if existing.data and len(existing.data) > 0:
+            raise HTTPException(status_code=409, detail="You have already submitted this exam. Only one submission is allowed.")
 
         # Fetch student's public key
         rec = supabase.table("public_keys").select("public_key").eq("user_id", student_id).execute()

@@ -13,19 +13,18 @@ const getExamIcon = (title) => {
     return { icon: 'school', color: 'bg-indigo-500/20 text-indigo-400' };
 };
 
-export default function AvailableExams({ exams, results = [] }) {
+export default function AvailableExams({ exams, results = [], submissions = [] }) {
     const { isDarkMode } = useTheme();
-    // Create a set of exam IDs that have results
-    const examsWithResults = new Set(results.map(r => r.exam_id));
-    // Only show exams that haven't been completed
-    const pendingExams = exams.filter(exam => !examsWithResults.has(exam.exam_id));
+    // Exams the student has already submitted should not appear here
+    const submittedExamIds = new Set(submissions.map(s => s.exam_id));
+    // Only show exams that haven't been submitted yet
+    const pendingExams = exams.filter(exam => !submittedExamIds.has(exam.exam_id));
 
     return (
         <section id="exams">
             <div className="mb-6">
                 <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'} font-display`}>Upcoming Exams</h3>
                 <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'} mt-1`}>
-                    Secure environment active. Please ensure your workstation meets the integrity requirements before beginning any session.
                 </p>
             </div>
 

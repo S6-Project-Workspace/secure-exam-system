@@ -15,6 +15,7 @@ import {
     importRsaPssPublicKeyFromPem,
     verifyRsaPssSignature,
 } from "../../cryptoUtils";
+import DashboardHeaderNew from "./components/DashboardHeaderNew";
 
 export default function StudentViewResult() {
     const { examId } = useParams();
@@ -131,27 +132,8 @@ export default function StudentViewResult() {
 
     return (
         <div className={`min-h-screen ${isDarkMode ? 'bg-[#0f172a]' : 'bg-slate-50'} font-body transition-colors duration-300`}>
-            {/* Header */}
-            <header className={`${isDarkMode ? 'bg-[#1a2332] border-slate-700' : 'bg-white border-slate-200'} border-b px-6 py-4`}>
-                <div className="max-w-4xl mx-auto flex items-center justify-between">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className={`px-2 py-0.5 ${isDarkMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-700'} text-xs font-semibold rounded`}>RESULT</span>
-                        </div>
-                        <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Exam Result</h1>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <button onClick={toggleTheme} className={`relative flex items-center justify-center w-9 h-9 rounded-full ${isDarkMode ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-100 hover:bg-slate-200'} transition-all duration-300`} aria-label="Toggle theme">
-                            <span className={`material-symbols-outlined text-lg absolute transition-all duration-300 ${isDarkMode ? 'opacity-0 rotate-90 scale-0' : 'opacity-100 rotate-0 scale-100 text-amber-500'}`}>light_mode</span>
-                            <span className={`material-symbols-outlined text-lg absolute transition-all duration-300 ${isDarkMode ? 'opacity-100 rotate-0 scale-100 text-blue-400' : 'opacity-0 -rotate-90 scale-0'}`}>dark_mode</span>
-                        </button>
-                        <Link to="/student/dashboard" className={`flex items-center gap-2 ${isDarkMode ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'} transition-colors`}>
-                            <span className="material-symbols-outlined">arrow_back</span>
-                            Dashboard
-                        </Link>
-                    </div>
-                </div>
-            </header>
+            {/* Standard Header */}
+            <DashboardHeaderNew />
 
             <main className="max-w-4xl mx-auto px-6 py-8">
                 {/* Signature Verification Banner */}
@@ -203,9 +185,8 @@ export default function StudentViewResult() {
                             <div className={`px-8 py-6 ${percentage >= 60 ? 'bg-gradient-to-r from-emerald-600 to-teal-600' : percentage >= 40 ? 'bg-gradient-to-r from-amber-600 to-orange-600' : 'bg-gradient-to-r from-red-600 to-rose-600'} text-white`}>
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-white/70 text-sm mb-1">Your Score</p>
+                                        <p className="text-white/70 text-sm mb-1">Score</p>
                                         <p className="text-5xl font-bold">{feedbackData?.scored_marks ?? resultData.marks}</p>
-                                        <p className="text-white/70 text-sm mt-1">out of {feedbackData?.total_marks || 100}</p>
                                     </div>
                                     <div className="text-right">
                                         <p className="text-6xl font-bold opacity-90">{percentage}%</p>
@@ -270,19 +251,35 @@ export default function StudentViewResult() {
                                                         </span>
                                                     </div>
 
-                                                    <div className="flex flex-wrap gap-2 mt-2">
-                                                        {d.student_answer && !d.is_correct && (
-                                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${isDarkMode ? 'bg-red-900/30 text-red-400' : 'bg-red-100 text-red-700'}`}>
-                                                                <span className="material-symbols-outlined text-xs">close</span>
-                                                                Your answer: {d.student_answer}
-                                                            </span>
-                                                        )}
-                                                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${isDarkMode ? 'bg-emerald-900/30 text-emerald-400' : 'bg-emerald-100 text-emerald-700'}`}>
-                                                            <span className="material-symbols-outlined text-xs">check</span>
-                                                            Correct: {d.correct_answer}
-                                                        </span>
-                                                        {!d.student_answer && (
-                                                            <span className={`text-xs ${isDarkMode ? 'text-amber-400' : 'text-amber-600'}`}>Not answered</span>
+                                                    <div className="flex flex-col gap-2 mt-3">
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {d.student_answer ? (
+                                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border ${
+                                                                    d.is_correct
+                                                                        ? isDarkMode ? 'bg-emerald-900/30 text-emerald-300 border-emerald-700/50' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                                        : isDarkMode ? 'bg-red-900/30 text-red-300 border-red-700/50' : 'bg-red-50 text-red-700 border-red-200'
+                                                                }`}>
+                                                                    <span className="material-symbols-outlined text-xs">{d.is_correct ? 'check_circle' : 'cancel'}</span>
+                                                                    <span className="font-semibold">Your answer:</span>&nbsp;{d.student_answer}
+                                                                </span>
+                                                            ) : (
+                                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border ${isDarkMode ? 'bg-amber-900/20 text-amber-300 border-amber-700/50' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                                                                    <span className="material-symbols-outlined text-xs">warning</span>
+                                                                    Not answered
+                                                                </span>
+                                                            )}
+                                                            {!d.is_correct && (
+                                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border ${isDarkMode ? 'bg-emerald-900/30 text-emerald-300 border-emerald-700/50' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
+                                                                    <span className="material-symbols-outlined text-xs">check_circle</span>
+                                                                    <span className="font-semibold">Correct answer:</span>&nbsp;{d.correct_answer}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        {d.feedback && (
+                                                            <div className={`flex items-start gap-2 px-3 py-2 rounded-lg text-xs border ${isDarkMode ? 'bg-blue-900/20 text-blue-200 border-blue-800/40' : 'bg-blue-50 text-blue-700 border-blue-200'}`}>
+                                                                <span className="material-symbols-outlined text-xs mt-0.5">chat</span>
+                                                                <span><span className="font-semibold">Feedback:</span> {d.feedback}</span>
+                                                            </div>
                                                         )}
                                                     </div>
                                                 </div>

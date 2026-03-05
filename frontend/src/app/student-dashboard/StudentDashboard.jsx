@@ -20,6 +20,7 @@ export default function StudentDashboard() {
     const [keyStatus, setKeyStatus] = useState({ generated: false, uploaded: false });
     const [exams, setExams] = useState([]);
     const [results, setResults] = useState([]);
+    const [submissions, setSubmissions] = useState([]);
     const [stats, setStats] = useState({ upcoming: 0, attempted: 0, totalExams: 0 });
     const [performance, setPerformance] = useState({ average: 0, trend: 0, subjects: [] });
     const [loading, setLoading] = useState(true);
@@ -47,23 +48,26 @@ export default function StudentDashboard() {
         // Fetch data
         const fetchData = async () => {
             try {
-                const [examsRes, resultsRes] = await Promise.all([
+                const [examsRes, resultsRes, submissionsRes] = await Promise.all([
                     authFetch(`${API_BASE_URL}/exams/me`),
-                    authFetch(`${API_BASE_URL}/results/me`)
+                    authFetch(`${API_BASE_URL}/results/me`),
+                    authFetch(`${API_BASE_URL}/submissions/me`)
                 ]);
 
                 const examsData = await examsRes.json();
                 const resultsData = await resultsRes.json();
+                const submissionsData = await submissionsRes.json();
 
                 setExams(examsData.exams || []);
                 setResults(resultsData.results || []);
+                setSubmissions(submissionsData.submissions || []);
 
-                // Stats calculation
-                const attemptedCount = resultsData.results?.length || 0;
+                // Stats calculation — use submissions for attempted count
+                const submittedCount = submissionsData.submissions?.length || 0;
                 const totalCount = examsData.exams?.length || 0;
                 setStats({
-                    upcoming: Math.max(0, totalCount - attemptedCount),
-                    attempted: attemptedCount,
+                    upcoming: Math.max(0, totalCount - submittedCount),
+                    attempted: submittedCount,
                     totalExams: totalCount
                 });
 
@@ -79,6 +83,8 @@ export default function StudentDashboard() {
                 }
             } catch (err) {
                 console.error("Fetch data failed:", err);
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -89,8 +95,6 @@ export default function StudentDashboard() {
         const hasPrivateKey = !!localStorage.getItem("student_private_key");
         const hasSignKey = !!localStorage.getItem("student_sign_private_key");
         setKeyStatus({ generated: hasPrivateKey && hasSignKey, uploaded: hasPrivateKey && hasSignKey });
-
-        setLoading(false);
     }, [navigate]);
 
     const handleLogout = () => {
@@ -158,8 +162,9 @@ export default function StudentDashboard() {
     }
 
     // Calculate stats for the new dashboard
-    const pendingCount = Math.max(0, (exams?.length || 0) - (results?.length || 0));
-    const completedCount = results?.length || 0;
+    const submittedCount = submissions?.length || 0;
+    const pendingCount = Math.max(0, (exams?.length || 0) - submittedCount);
+    const completedCount = submittedCount;
     const totalCount = exams?.length || 0;
 
     return (
@@ -171,10 +176,6 @@ export default function StudentDashboard() {
                 <div id="dashboard" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
                     <div>
                         <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Dashboard Overview</h2>
-                        <div className="flex items-center gap-2 mt-1">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                            <span className="text-emerald-400 text-sm">System Integrity Check: Passed</span>
-                        </div>
                     </div>
                     <div className="flex items-center gap-3">
                         <button className={`flex items-center gap-2 px-4 py-2 ${isDarkMode ? 'bg-[#1a2332] border-slate-700 text-slate-300 hover:bg-[#1e293b]' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100 shadow-sm'} border rounded-lg transition-colors text-sm`}>
@@ -201,7 +202,7 @@ export default function StudentDashboard() {
                         }}
                     />
                     <SecurityStatusCard keyStatus={keyStatus} />
-                    <PendingExamsCard exams={exams} results={results} />
+                    <PendingExamsCard exams={exams} results={results} submissions={submissions} />
                 </div>
 
                 {/* Identity Management Section */}
@@ -211,12 +212,12 @@ export default function StudentDashboard() {
 
                 {/* Available Exams Section */}
                 <section id="exams" className="mb-8">
-                    <AvailableExams exams={exams} results={results} />
+                    <AvailableExams exams={exams} results={results} submissions={submissions} />
                 </section>
 
                 {/* Completed Exams / Results Section */}
                 <section id="results" className="mb-8">
-                    <CompletedExams exams={exams} results={results} />
+                    <CompletedExams exams={exams} results={results} submissions={submissions} />
                 </section>
             </main>
 

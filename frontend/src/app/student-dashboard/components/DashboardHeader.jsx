@@ -43,7 +43,6 @@ export default function DashboardHeader({ name, id, onLogout }) {
 
                         <div className="hidden sm:flex flex-col items-end">
                             <span className="text-sm font-bold text-slate-800 dark:text-white">{name}</span>
-                            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium bg-slate-100 dark:bg-neutral-700 px-2 py-0.5 rounded-full">ID: {id?.slice(0, 8)}</span>
                         </div>
                         <div className="h-10 w-10 rounded-full bg-blue-900/20 dark:bg-blue-500/20 flex items-center justify-center text-blue-900 dark:text-blue-400 font-bold">
                             {name?.charAt(0)}

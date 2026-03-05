@@ -14,6 +14,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "./config";
 import { getToken, authFetch } from "./app/auth/authHelpers";
 import { useTheme } from "./context/ThemeContext";
+import InstructorHeader from "./app/instructor-dashboard/components/InstructorHeader";
 import {
   base64ToArrayBuffer,
   bufferToBase64,
@@ -264,30 +265,7 @@ export default function InstructorEvaluate() {
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-[#0f172a]' : 'bg-slate-50'} font-body transition-colors duration-300`}>
-      {/* Header */}
-      <header className={`${isDarkMode ? 'bg-[#1a2332] border-slate-700' : 'bg-white border-slate-200'} border-b px-6 py-4 transition-colors duration-300`}>
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className={`px-2 py-0.5 ${isDarkMode ? 'bg-purple-900/30 text-purple-400' : 'bg-purple-100 text-purple-700'} text-xs font-semibold rounded`}>
-                INSTRUCTOR
-              </span>
-            </div>
-            <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Evaluate Submissions</h1>
-            <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Decrypt, auto-grade, and publish signed results</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <button onClick={toggleTheme} className={`relative flex items-center justify-center w-9 h-9 rounded-full ${isDarkMode ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-100 hover:bg-slate-200'} transition-all duration-300`} aria-label="Toggle theme">
-              <span className={`material-symbols-outlined text-lg absolute transition-all duration-300 ${isDarkMode ? 'opacity-0 rotate-90 scale-0' : 'opacity-100 rotate-0 scale-100 text-amber-500'}`}>light_mode</span>
-              <span className={`material-symbols-outlined text-lg absolute transition-all duration-300 ${isDarkMode ? 'opacity-100 rotate-0 scale-100 text-blue-400' : 'opacity-0 -rotate-90 scale-0'}`}>dark_mode</span>
-            </button>
-            <Link to="/instructor/dashboard" className={`flex items-center gap-2 ${isDarkMode ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'} transition-colors`}>
-              <span className="material-symbols-outlined">arrow_back</span>
-              Dashboard
-            </Link>
-          </div>
-        </div>
-      </header>
+      <InstructorHeader />
 
       <main className="max-w-6xl mx-auto px-6 py-8">
         {/* Key Warning */}

@@ -43,16 +43,7 @@ export default function QuickActions() {
                     </div>
                 </Link>
 
-                {/* Publish Results */}
-                <button className="flex flex-col items-start gap-3 p-6 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-blue-900 dark:hover:border-blue-500 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group text-left h-full">
-                    <div className="p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-900 dark:text-blue-400 rounded-full group-hover:bg-blue-900 group-hover:text-white transition-colors">
-                        <span className="material-symbols-outlined text-2xl">publish</span>
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-1">Publish Results</h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Finalize and release digitally signed grades to students.</p>
-                    </div>
-                </button>
+                
             </div>
         </section>
     );

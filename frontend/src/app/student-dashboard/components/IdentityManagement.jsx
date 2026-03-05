@@ -7,9 +7,7 @@ export default function IdentityManagement({ keyStatus, onGenerateKeys }) {
     
     return (
         <section className={`${isDarkMode ? 'bg-[#1a2332] border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'} rounded-2xl border overflow-hidden transition-colors duration-300`}>
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex justify-between items-center">
-               
-            </div>
+
 
             <div className="p-6 md:p-8">
                 <div className="flex flex-col md:flex-row gap-6 items-center">

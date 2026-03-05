@@ -4,7 +4,90 @@ from app.db import supabase
 
 
 
+from fastapi import APIRouter, Depends, HTTPException
+from app.routes.auth import get_current_user
+from app.db import supabase
+
+
+
 router = APIRouter(prefix="/instructor", tags=["Instructor"])
+
+
+@router.get("/stats")
+def get_instructor_stats(user=Depends(get_current_user)):
+    """
+    Returns dashboard stats for the authenticated instructor:
+    - total_submissions: all submissions received across instructor's exams
+    - evaluated_count: submissions that have published results
+    - pending_evaluation: submissions with no result yet
+    - total_exams: total exams created by the instructor
+    - unpublished_exams: exams not yet published (no entry in exam_packages), recent 3
+    """
+    if user.get("role") != "instructor":
+        raise HTTPException(status_code=403, detail="Only instructors can view stats")
+
+    instructor_id = user.get("sub")
+
+    try:
+        # 1. All exams for this instructor
+        exams_rec = supabase.table("exams").select("exam_id, title, created_at").eq("instructor_id", instructor_id).order("created_at", desc=True).execute()
+        all_exams = exams_rec.data or []
+        exam_ids = [e["exam_id"] for e in all_exams]
+
+        total_exams = len(exam_ids)
+        total_submissions = 0
+        evaluated_count = 0
+
+        for exam_id in exam_ids:
+            try:
+                subs = supabase.table("submissions").select("exam_id", count="exact").eq("exam_id", exam_id).execute()
+                total_submissions += subs.count or 0
+            except Exception:
+                pass
+            try:
+                res = supabase.table("results").select("result_id", count="exact").eq("exam_id", exam_id).execute()
+                evaluated_count += res.count or 0
+            except Exception:
+                pass
+
+        pending_evaluation = max(0, total_submissions - evaluated_count)
+
+        # 2. Find unpublished exams — those without an entry in exam_packages
+        unpublished = []
+        for exam in all_exams:
+            try:
+                pkg = supabase.table("exam_packages").select("exam_id").eq("exam_id", exam["exam_id"]).limit(1).execute()
+                if not pkg.data:
+                    unpublished.append({
+                        "exam_id": exam["exam_id"],
+                        "title": exam.get("title", "Untitled"),
+                        "created_at": exam.get("created_at"),
+                    })
+            except Exception:
+                # If table doesn't exist or fails, treat as unpublished
+                unpublished.append({
+                    "exam_id": exam["exam_id"],
+                    "title": exam.get("title", "Untitled"),
+                    "created_at": exam.get("created_at"),
+                })
+
+        return {
+            "total_exams": total_exams,
+            "total_submissions": total_submissions,
+            "evaluated_count": evaluated_count,
+            "pending_evaluation": pending_evaluation,
+            "unpublished_exams": unpublished[:3],  # Return only the 3 most recent
+        }
+
+    except Exception as e:
+        print(f"[INSTRUCTOR/STATS] Error: {e}")
+        return {
+            "total_exams": 0,
+            "total_submissions": 0,
+            "evaluated_count": 0,
+            "pending_evaluation": 0,
+            "unpublished_exams": [],
+        }
 
 
 @router.get("/submissions/{exam_id}")

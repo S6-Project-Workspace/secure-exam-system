@@ -18,6 +18,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config";
 import { getToken, authFetch } from "./auth/authHelpers";
 import { useTheme } from "../context/ThemeContext";
+import InstructorHeader from "./instructor-dashboard/components/InstructorHeader";
 
 export default function InstructorKeyGen() {
   const navigate = useNavigate();
@@ -192,40 +193,7 @@ export default function InstructorKeyGen() {
 
   return (
     <div className="bg-slate-50 dark:bg-background-dark min-h-screen flex flex-col font-body transition-colors duration-300">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full bg-[#1E3A8A] dark:bg-surface-dark text-white shadow-lg transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-3">
-              <div className="bg-white/10 p-2 rounded-lg">
-                <span className="material-symbols-outlined text-2xl">school</span>
-              </div>
-              <div>
-                <h1 className="text-lg font-bold leading-none tracking-tight">University Secure Exam System</h1>
-                <span className="text-xs text-blue-200 font-medium uppercase tracking-wider">Faculty Portal</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-6">
-              {/* Theme Toggle Button */}
-              <button
-                onClick={toggleTheme}
-                className="relative flex items-center justify-center w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-300"
-                aria-label="Toggle theme"
-              >
-                <span className={`material-symbols-outlined text-lg absolute transition-all duration-300 ${isDarkMode ? 'opacity-0 rotate-90 scale-0' : 'opacity-100 rotate-0 scale-100 text-amber-400'}`}>
-                  light_mode
-                </span>
-                <span className={`material-symbols-outlined text-lg absolute transition-all duration-300 ${isDarkMode ? 'opacity-100 rotate-0 scale-100 text-blue-400' : 'opacity-0 -rotate-90 scale-0'}`}>
-                  dark_mode
-                </span>
-              </button>
-              <Link to="/instructor/dashboard" className="text-sm font-medium text-blue-200 hover:text-white transition-colors">
-                ← Back to Dashboard
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+      <InstructorHeader />
 
       {/* Main Content */}
       <main className="flex-grow flex flex-col items-center justify-start pt-12 pb-12 px-4 sm:px-6">
