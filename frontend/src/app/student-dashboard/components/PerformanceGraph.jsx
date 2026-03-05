@@ -141,7 +141,7 @@ export default function PerformanceGraph({ results = [], exams = [] }) {
                         </div>
                         <div>
                             <h3 className={`font-bold text-base ${heading}`}>Performance</h3>
-                            <p className={`text-xs ${muted}`}>{sorted.length} exam{sorted.length !== 1 ? "s" : ""} · (score ÷ questions) × 100</p>
+                            <p className={`text-xs ${muted}`}>{sorted.length} exam{sorted.length !== 1 ? "s" : ""}</p>
                         </div>
                     </div>
                     <div className="flex flex-wrap gap-2 text-xs font-semibold">
