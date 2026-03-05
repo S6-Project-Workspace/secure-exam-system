@@ -15,7 +15,7 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 class PublishResultRequest(BaseModel):
     exam_id: str
     student_id: str
-    marks: float
+    marks: int  # Must be int to match JavaScript's JSON.stringify (no .0)
     feedback: str = None
     evaluated_at: str
     instructor_signature: str  # base64 signature over canonical result JSON
@@ -65,15 +65,17 @@ def publish_result(payload: PublishResultRequest, user=Depends(get_current_user)
         raise HTTPException(status_code=400, detail="Instructor public key is invalid or too weak")
 
     # Re-create canonical result JSON to verify signature
+    # marks must be int to match JavaScript's JSON.stringify (which omits .0)
     result_obj = {
         "exam_id": payload.exam_id,
         "student_id": payload.student_id,
-        "marks": payload.marks,
+        "marks": int(payload.marks),
         "evaluated_at": payload.evaluated_at,
     }
 
     # Canonical JSON: sorted keys, compact separators. Frontend must use same canonicalization.
     canonical = json.dumps(result_obj, separators=(",", ":"), sort_keys=True).encode()
+    print(f"[RESULT] Canonical JSON for verification: {canonical}")
 
     try:
         sig = base64.b64decode(payload.instructor_signature)
@@ -97,7 +99,7 @@ def publish_result(payload: PublishResultRequest, user=Depends(get_current_user)
     record = {
         "exam_id": payload.exam_id,
         "student_id": payload.student_id,
-        "marks": payload.marks,
+        "marks": int(payload.marks),
         "feedback": payload.feedback,
         "instructor_id": instructor_id,
         "instructor_signature": payload.instructor_signature,
