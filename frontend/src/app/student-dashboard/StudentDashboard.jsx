@@ -11,6 +11,7 @@ import SecurityStatusCard from "./components/SecurityStatusCard";
 import PendingExamsCard from "./components/PendingExamsCard";
 import IdentityManagement from "./components/IdentityManagement";
 import AvailableExams from "./components/AvailableExams";
+import CompletedExams from "./components/CompletedExams";
 import DashboardFooter from "./components/DashboardFooter";
 
 export default function StudentDashboard() {
@@ -211,6 +212,11 @@ export default function StudentDashboard() {
                 {/* Available Exams Section */}
                 <section id="exams" className="mb-8">
                     <AvailableExams exams={exams} results={results} />
+                </section>
+
+                {/* Completed Exams / Results Section */}
+                <section id="results" className="mb-8">
+                    <CompletedExams exams={exams} results={results} />
                 </section>
             </main>
 
