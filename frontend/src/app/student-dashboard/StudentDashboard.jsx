@@ -13,6 +13,7 @@ import IdentityManagement from "./components/IdentityManagement";
 import AvailableExams from "./components/AvailableExams";
 import CompletedExams from "./components/CompletedExams";
 import DashboardFooter from "./components/DashboardFooter";
+import PerformanceGraph from "./components/PerformanceGraph";
 
 export default function StudentDashboard() {
     const navigate = useNavigate();
@@ -208,6 +209,11 @@ export default function StudentDashboard() {
                 {/* Identity Management Section */}
                 <section id="settings" className="mb-8">
                     <IdentityManagement keyStatus={keyStatus} onGenerateKeys={generateAndUploadKeys} />
+                </section>
+
+                {/* Performance Graph Section */}
+                <section id="performance" className="mb-8">
+                    <PerformanceGraph results={results} exams={exams} />
                 </section>
 
                 {/* Available Exams Section */}
